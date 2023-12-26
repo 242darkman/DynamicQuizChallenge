@@ -11,7 +11,7 @@ import { MongooseModule } from '@nestjs/mongoose';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.MONGO_DATABASE_URI),
-    CacheModule.register(),
+    CacheModule.register({ isGlobal: true }),
   ],
   controllers: [AppController],
   providers: [
