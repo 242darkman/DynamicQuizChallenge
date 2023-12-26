@@ -1,8 +1,8 @@
-# DynamicQuizChallenge
+# DynamicQuizChallenge ♒
 Plateforme de quiz dynamique et personnalisable avec `NestJS 10` et `NextJS 14`, intégrant l'API OpenAI pour une expérience de jeu interactive et enrichissante.
 
 
-## Description du Projet
+## Description du Projet 📔
 
 Ce projet est une plateforme de quiz qui offre aux utilisateurs une expérience de jeu personnalisée et dynamique. Sélectionnez vos sujets de quiz préférés, ajustez le niveau de difficulté, et plongez dans l'excitation de l'action multijoueur en temps réel. Avec des performances optimales et une sécurité avancée, nous offrons une expérience de quiz sans latence et sans temps d'arrêt.
 ## Installation et Configuration 🚩
