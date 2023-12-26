@@ -1,0 +1,6 @@
+{
+  "name": "dynamic-quizz-challenge",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+}
