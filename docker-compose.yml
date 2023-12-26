@@ -16,7 +16,7 @@ services:
       - /usr/src/app/node_modules
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb://mongo:27017/dunamicquizz
+      - MONGO_URI=mongodb://mongo:27017/dynamicquizz
     depends_on:
       - mongo
 
