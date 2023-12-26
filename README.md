@@ -35,6 +35,42 @@ Pour une compréhension détaillée des composants individuels et de leur foncti
 
 - **Backend (NestJS) :** Documentation disponible dans `core-dynamic-quizz/README.md`.
 - **Frontend (NextJS) :** Documentation disponible dans `office-dynamic-quizz/README.md`.
+
+### Solution 2️⃣ (Utilisation de docker) : 
+Cette solution est mise en place afin de travailler avec le même environnement ainsi que les mêmes versions de dépendances des librairies utilisés dans les différents projets.
+   ### exécuter le containeurs
+```bash
+docker-compose up --build -d
+```
+
+   ### vérifier l'état des services définis dans le `docker-compose.yml`
+```bash
+docker-compose ps
+```
+
+   ### Consulter les logs
+   * Pour le backend ➡️
+```bash
+docker-compose logs core-dynamic-quizz -f
+```
+   * Pour le frontend ➡️
+```bash
+docker-compose logs office-dynamic-quizz -f
+```
+
+   ### Arrêter les containers en cours d'exécution sans les supprimer
+```bash
+docker-compose stop
+```
+
+   ### Arrêter et supprimer les containers en cours d'exécution
+```bash
+docker-compose down
+```
+
+---
+
+
 ## Accéder aux Services via un Navigateur ou un Client API 🌐
   Pour une vérification pratique, vous pouvez essayer d'accéder à vos applications via un navigateur ou un client API :
 
