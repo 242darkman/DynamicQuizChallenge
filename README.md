@@ -5,6 +5,10 @@ Plateforme de quiz dynamique et personnalisable avec `NestJS 10` et `NextJS 14`,
 ## Description du Projet 📔
 
 Ce projet est une plateforme de quiz qui offre aux utilisateurs une expérience de jeu personnalisée et dynamique. Sélectionnez vos sujets de quiz préférés, ajustez le niveau de difficulté, et plongez dans l'excitation de l'action multijoueur en temps réel. Avec des performances optimales et une sécurité avancée, nous offrons une expérience de quiz sans latence et sans temps d'arrêt.
+## Bonus Techniques
+
+### Améliorations de Sécurité
+- **Authentification JWT :** Gestion sécurisée des sessions utilisateurs.
 ## Installation et Configuration 🚩
 
 Pour mettre en place et exécuter ce projet, suivez ces étapes :
@@ -75,4 +79,4 @@ docker-compose down
   Pour une vérification pratique, vous pouvez essayer d'accéder à vos applications via un navigateur ou un client API :
 
 - Pour le **frontend Next.js** 🌐, ouvrez un navigateur et accédez à `http://localhost:3000`.
-- Pour le **backend NestJS** 🔧, utilisez un client API comme Postman ou effectuez une requête curl à `http://localhost:8000`.
+- Pour le **backend NestJS** 🔧, utilisez un client API comme Postman ou effectuez une requête curl à `http://localhost:5000`.
