@@ -13,7 +13,7 @@ export default function Signup() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // router.push('/signup');
+    router.push('/signin');
   };
 
   return (
@@ -79,7 +79,7 @@ export default function Signup() {
           </div>
         </form>
         <p className="mt-4 text-center text-gray-800">
-          Vous avez déjà un compte ? <a href="/login" className="text-blue-500 hover:underline">Se connecter</a>
+          Vous avez déjà un compte ? <a href="/signin" className="text-blue-500 hover:underline">Se connecter</a>
         </p>
       </div>
     </div>
