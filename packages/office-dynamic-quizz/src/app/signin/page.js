@@ -55,9 +55,9 @@ export default function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-7 bg-white rounded shadow-md w-1/2">
-        <h2 className="text-2xl font-bold text-center">Connexion</h2>
-        <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="p-7 bg-white/30 backdrop-blur-sm rounded shadow-lg w-1/2 border border-gray-200">
+        <h2 className="text-2xl font-bold text-center text-gray-800">Connexion</h2>
+        <form className="space-y-4 mt-6" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Email <span className="text-red-500">*</span>
@@ -82,14 +82,16 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button
+          <div className="flex items-center justify-center">
+            <button
             type="submit"
-            className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+            className="w-1/2 px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600 focus:ring focus:ring-blue-300"
           >
             Se connecter
           </button>
+          </div>
         </form>
-        <p className="mt-4 text-center">
+        <p className="mt-4 text-center text-gray-800">
           Pas encore de compte ? <a href="/signup" className="text-blue-500 hover:underline">Créer un compte</a>
         </p>
       </div>
