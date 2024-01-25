@@ -18,7 +18,7 @@ Pour mettre en place et exécuter ce projet, suivez ces étapes :
 ### Prérequis
 - Node.js (version recommandée : 20.x)
 - Gestionnaire de paquets `NPM`
-- Base de données (MongoDB)
+- Base de données (MySQL)
 - Redis pour la gestion des sessions et la scalabilité
 
 ### Installation
