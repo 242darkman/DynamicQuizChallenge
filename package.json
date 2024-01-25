@@ -1,5 +1,7 @@
 {
   "name": "dynamic-quizz-challenge",
+  "version": "0.0.1",
+  "description": "Plateforme de quiz dynamique et personnalisable avec NestJS 10 et NextJS 14, intégrant l'API OpenAI pour une expérience de jeu interactive et enrichissante.",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -10,6 +12,20 @@
     "start:all": "concurrently \"npm run start:core\" \"npm run start:office\""
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0"
+  },
+  "keywords": [
+    "ts",
+    "react",
+    "nestjs",
+    "passport",
+    "jwt",
+    "socketjs",
+    "tailwindcss"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/242darkman/DynamicQuizChallenge.git"
   }
 }
