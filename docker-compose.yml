@@ -1,34 +1,29 @@
 version: '3.8'
+
 services:
-  mongo:
-    image: mongo:6.0
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-
-  core-dynamic-quizz:
-    build: ./packages/core-dynamic-quizz
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./packages/core-dynamic-quizz:/usr/src/app
-      - /usr/src/app/node_modules
+  mysql:
+    image: mysql:8.3.0
+    container_name: mysql_container
     environment:
-      - NODE_ENV=development
-      - MONGO_URI=mongodb://mongo:27017/dynamicquizz
+      MYSQL_USER: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_ROOT_PASSWORD: "" 
+      MYSQL_DATABASE: real_time_quizz
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.2.1
+    container_name: phpmyadmin_container
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "5050:80"
     depends_on:
-      - mongo
-
-  office-dynamic-quizz:
-    build: ./packages/office-dynamic-quizz
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./packages/office-dynamic-quizz:/usr/src/app
-      - /usr/src/app/node_modules
-    environment:
-      - NODE_ENV=development
+      - mysql
 
 volumes:
-  mongo-data:
+  mysql_data:
