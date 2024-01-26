@@ -17,16 +17,17 @@ export default function Login() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!email || !password) {
-      toast.error("Veuillez remplir tous les champs obligatoires.");
+      toast.error("Oups, il semblerait que vous ayez oublié de remplir un champ (ou deux). Merci de les compléter !");
       return;
     }
 
     if (!validateEmail(email)) {
-      toast.error("L'email n'est pas valide.");
+      toast.error("Hmm, cet email a l'air d'être un peu trop créatif. Veuillez entrer une adresse valide.");
+
       return;
     }
 
-    const loadingToast = toast.loading("Un instant, nous vérifions vos informations...");
+    const loadingToast = toast.loading("Juste un instant, nous faisons tourner la roue de la fortune de la connexion...");
 
     try {
       const response = await fetch('http://localhost:5000/api/users/login', {
@@ -38,18 +39,18 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        toast.error('Erreur de connexion');
+        toast.error("Erreur de connexion. Même internet semble jouer à cache-cache parfois !");
         throw new Error('Erreur de connexion');
       }
 
       const data = await response.json();
       localStorage.setItem('app_token', data.access_token);
       toast.dismiss(loadingToast);
-      toast.success("Connexion réussie !");
+      toast.success("Bingo ! Connexion réussie. Bienvenue dans votre nouvelle aventure !");
       router.push('/');
 
     } catch (error) {
-      toast.error(error.message || "Une erreur est survenue lors de la connexion.");
+      toast.error(error.message || "Oups, un petit souci technique... Notre équipe de ninjas est sur le coup !");
     }
   };
 
