@@ -29,7 +29,7 @@ export class UserService {
    */
   async create(newUser: UserInterface): Promise<UserInterface> {
     try {
-      const exists: boolean = await this.mailExists(newUser.email);
+      const exists: boolean = await this.checkEmailExists(newUser.email);
 
       if (exists) {
         throw new HttpException('Email is already in use', HttpStatus.CONFLICT);
@@ -190,5 +190,15 @@ export class UserService {
         username: Like(`%${username.toLowerCase()}%`),
       },
     });
+  }
+
+  async checkUsernameExists(username: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { username } });
+    return !!user;
+  }
+
+  async checkEmailExists(email: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { email } });
+    return !!user;
   }
 }

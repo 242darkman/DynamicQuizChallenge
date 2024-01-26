@@ -1,5 +1,6 @@
 'use client';
 
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -8,12 +9,54 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [emailAvailable, setEmailAvailable] = useState(null);
   const router = useRouter();
+
+  const checkUsername = async (username) => {
+    const response = await fetch(`http://localhost:5000/api/users/check-username?username=${username}`);
+    const data = await response.json();
+    setUsernameAvailable(!data.exists);
+  };
+
+  const checkEmail = async (email) => {
+    const response = await fetch(`http://localhost:5000/api/users/check-email?email=${email}`);
+    const data = await response.json();
+    setEmailAvailable(!data.exists);
+  };
+
+  const passwordsMatch = password === confirmPassword;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (!username || !email || !password || !passwordsMatch) {
+      toast.error("Veuillez remplir correctement tous les champs.");
+      return;
+    }
 
-    router.push('/signin');
+    const loadingToast = toast.loading("Patientez un petit moment, nous orchestrons votre accueil en coulisses... 🎩✨");
+
+    try {
+      const response = await fetch('http://localhost:5000/api/users/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      if (!response.ok) {
+        toast.error('Erreur lors de l\'inscription');
+        throw new Error('Erreur lors de l\'inscription');
+      }
+
+      toast.dismiss(loadingToast);
+      toast.success("Félicitations, vous êtes maintenant membre de notre club exclusif ! 🥳 Préparez-vous, votre aventure épique commence... juste après cette pause café. ☕");
+      router.push('/signin');
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error(error.message || "Une erreur est survenue lors de l'inscription.");
+    }
   };
 
   return (
@@ -30,8 +73,13 @@ export default function Signup() {
               className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
               required
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => { setUsername(e.target.value); checkUsername(e.target.value); }}
             />
+            {usernameAvailable !== null && (
+              <span style={{ color: usernameAvailable ? 'green' : 'red' }}>
+                {usernameAvailable ? 'Nom d\'utilisateur disponible' : 'Nom d\'utilisateur déjà pris'}
+              </span>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -42,8 +90,13 @@ export default function Signup() {
               className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring focus:ring-opacity-50"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); checkEmail(e.target.value); }}
             />
+            {emailAvailable !== null && (
+              <span style={{ color: emailAvailable ? 'green' : 'red' }}>
+                {emailAvailable ? 'Email disponible' : 'Email déjà utilisé'}
+              </span>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -68,6 +121,11 @@ export default function Signup() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
+            {!passwordsMatch && (
+              <span style={{ color: 'red' }}>
+                Les mots de passe ne correspondent pas
+              </span>
+            )}
           </div>
           <div className="flex items-center justify-center">
             <button

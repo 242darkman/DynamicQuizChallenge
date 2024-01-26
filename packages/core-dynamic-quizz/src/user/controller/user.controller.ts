@@ -53,4 +53,20 @@ export class UserController {
       expires_in: 10000,
     };
   }
+
+  @Get('/check-username')
+  async checkUsernameExists(
+    @Query('username') username: string,
+  ): Promise<{ exists: boolean }> {
+    const exists = await this.userService.checkUsernameExists(username);
+    return { exists };
+  }
+
+  @Get('/check-email')
+  async checkEmailExists(
+    @Query('email') email: string,
+  ): Promise<{ exists: boolean }> {
+    const exists = await this.userService.checkEmailExists(email);
+    return { exists };
+  }
 }
