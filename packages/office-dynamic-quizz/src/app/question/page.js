@@ -7,16 +7,16 @@ export default function Question() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-mainColor">
+    <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
       <div className="flex justify-between p-10">
-        <p className="text-m">Votre pseudo</p>
+        <p className="text-m text-white">Votre pseudo</p>
         <div className="text-m">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
-            stroke="currentColor"
+            stroke="white"
             className="w-12 h-12"
           >
             <path
@@ -25,10 +25,10 @@ export default function Question() {
               d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
             />
           </svg>
-          <p className="text-m">15:20</p>
+          <p className="text-m text-white">15:20</p>
         </div>
       </div>
-      <h1 className="font-bold text-3xl pt-10 pb-20 flex flex-col items-center justify-center ">
+      <h1 className="font-bold text-3xl pt-10 pb-20 flex flex-col items-center justify-center text-white ">
         Quelle est la planète la plus petite du système solaire ?
       </h1>
 

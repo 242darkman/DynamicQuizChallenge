@@ -2,10 +2,12 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col">
+    <main className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col bg-[url('/landscape.svg')] bg-cover bg-center">
       <div>
-        <h1 className="text-5xl">DynamicQuizChallenge</h1>
-        <p>une expérience de jeu personnalisée et dynamique</p>
+        <h1 className="text-5xl text-white">DynamicQuizChallenge</h1>
+        <p className="text-white">
+          une expérience de jeu personnalisée et dynamique
+        </p>
       </div>
       <div className="flex items-center justify-center gap-10 m-10">
         <a

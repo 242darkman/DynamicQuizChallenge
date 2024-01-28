@@ -67,7 +67,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-mainColor">
+    <div className="flex items-center justify-center min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
       <div className="p-12 bg-white/100 backdrop-blur-sm rounded shadow-lg w-1/2 border">
         <h2 className="text-2xl font-bold text-center text-mainColor">
           Connexion
