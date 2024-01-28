@@ -97,18 +97,6 @@ export class UserService {
   }
 
   /**
-   * Vérifie si un email donné existe dans la base de données des utilisateurs.
-   *
-   * @param {string} email - L'email à vérifier.
-   * @return {Promise<boolean>} Un booléen indiquant si l'email existe ou non.
-   */
-  private async mailExists(email: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { email } });
-
-    return user != null;
-  }
-
-  /**
    * Cherche et récupère un utilisateur par son identifiant.
    *
    * @param {number} id - L'ID de l'utilisateur à trouver.
