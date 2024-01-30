@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import withAuth from "@/app/middleware";
 
-export default function Ranking() {
+function Ranking() {
   const router = useRouter();
 
   return (
@@ -121,3 +122,5 @@ export default function Ranking() {
     </div>
   );
 }
+
+export default withAuth(Ranking);

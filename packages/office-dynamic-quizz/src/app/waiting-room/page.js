@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
+import withAuth from "@/app/middleware";
 
-export default function Home() {
+function WaitingHome() {
   const [participants, setParticipants] = useState([]);
   const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; // À rendre dynamique
 
@@ -43,3 +44,4 @@ const startGame = () => {
   console.log("Début de la partie!");
 };
 
+export default withAuth(WaitingHome);

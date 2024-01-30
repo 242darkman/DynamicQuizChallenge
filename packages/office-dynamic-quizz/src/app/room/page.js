@@ -1,7 +1,8 @@
 'use client';
 import Image from "next/image";
+import withAuth from "@/app/middleware";
 
-export default function Home() {
+function Room() {
   return (
     <main className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col">
       <div>
@@ -24,3 +25,5 @@ export default function Home() {
     </main>
   );
 }
+
+export default withAuth(Room);

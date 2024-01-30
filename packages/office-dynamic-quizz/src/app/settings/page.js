@@ -3,8 +3,9 @@
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import withAuth from "@/app/middleware";
 
-export default function Settings() {
+function Settings() {
   const router = useRouter();
 
   return (
@@ -104,3 +105,5 @@ export default function Settings() {
     </div>
   );
 }
+
+export default withAuth(Settings);

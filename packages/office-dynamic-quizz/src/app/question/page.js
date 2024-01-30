@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import withAuth from "@/app/middleware";
 
-export default function Question() {
+function Question() {
   const router = useRouter();
 
   return (
@@ -49,3 +50,6 @@ export default function Question() {
     </div>
   );
 }
+
+
+export default withAuth(Question);
