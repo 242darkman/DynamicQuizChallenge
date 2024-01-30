@@ -14,6 +14,8 @@ import { AuthModule } from 'src/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { LoggerMiddleware } from 'src/middleware/logger/logger.middleware';
+import OpenAI from 'openai';
+import { QuizModule } from './quiz/quiz.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'src/user/user.module';
 
@@ -36,12 +38,17 @@ import { UserModule } from 'src/user/user.module';
     }),
     UserModule,
     AuthModule,
+    QuizModule,
   ],
   controllers: [AppController],
   providers: [
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
+    },
+    {
+      provide: OpenAI,
+      useValue: new OpenAI({ apiKey: process.env.OPENAI_API_KEY }),
     },
     AppService,
   ],
