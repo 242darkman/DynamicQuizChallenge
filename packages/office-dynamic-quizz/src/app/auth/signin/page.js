@@ -1,13 +1,12 @@
 "use client";
 
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import { useState } from "react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
 
   const validateEmail = (email) => {
     const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -57,7 +56,7 @@ export default function Login() {
       toast.success(
         "Bingo ! Connexion réussie. Bienvenue dans votre nouvelle aventure !"
       );
-      router.push("/");
+      redirect("/");
     } catch (error) {
       toast.error(
         error.message ||
@@ -108,7 +107,7 @@ export default function Login() {
         </form>
         <p className="mt-4 text-center text-gray-800">
           Pas encore de compte ?{" "}
-          <a href="/signup" className="text-secondColor hover:underline">
+          <a href="/auth/signup" className="text-secondColor hover:underline">
             Créer un compte
           </a>
         </p>

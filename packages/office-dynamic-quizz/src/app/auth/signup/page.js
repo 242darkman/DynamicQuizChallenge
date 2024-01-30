@@ -60,7 +60,7 @@ export default function Signup() {
       toast.success(
         "Félicitations, vous êtes maintenant membre de notre club exclusif ! 🥳 Préparez-vous, votre aventure épique commence... juste après cette pause café. ☕"
       );
-      router.push("/signin");
+      router.push("/auth/signin");
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error(
@@ -158,7 +158,7 @@ export default function Signup() {
         </form>
         <p className="mt-4 text-center text-gray-800">
           Vous avez déjà un compte ?{" "}
-          <a href="/signin" className="text-secondColor hover:underline">
+          <a href="/auth/signin" className="text-secondColor hover:underline">
             Se connecter
           </a>
         </p>
