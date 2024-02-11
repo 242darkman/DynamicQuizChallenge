@@ -57,7 +57,7 @@ export default function Login() {
       toast.success(
         "Bingo ! Connexion réussie. Bienvenue dans votre nouvelle aventure !"
       );
-      router.push('/');
+      router.push('/room');
     } catch (error) {
       toast.error(
         error.message ||
