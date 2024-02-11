@@ -1,12 +1,13 @@
 "use client";
 
 import { toast } from "sonner";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const validateEmail = (email) => {
     const re = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -56,7 +57,7 @@ export default function Login() {
       toast.success(
         "Bingo ! Connexion réussie. Bienvenue dans votre nouvelle aventure !"
       );
-      redirect("/");
+      router.push('/');
     } catch (error) {
       toast.error(
         error.message ||
