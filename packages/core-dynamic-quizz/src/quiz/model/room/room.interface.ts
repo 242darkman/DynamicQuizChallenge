@@ -7,6 +7,6 @@ export interface RoomInterface {
   users: UserInterface[];
   isPrivate: boolean;
   password?: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at?: Date;
+  updated_at?: Date;
 }

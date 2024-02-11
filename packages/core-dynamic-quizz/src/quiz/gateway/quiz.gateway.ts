@@ -82,33 +82,35 @@ export class QuizGateway
     socket.disconnect();
   }
 
-  @SubscribeMessage('createRoom')
-  async onCreateRoom(
-    socket: Socket,
-    room: RoomInterface,
-    isPrivate: boolean,
-    password?: string,
-  ) {
-    const createdRoom: RoomInterface = await this.roomService.createRoom(
-      room,
-      socket.data.user,
-      isPrivate,
-      password,
-    );
+  // @SubscribeMessage('createRoom')
+  // async onCreateRoom(
+  //   socket: Socket,
+  //   room: RoomInterface,
+  //   isPrivate: boolean,
+  //   password?: string,
+  // ) {
+  //   console.log("Début de l'exécution de onCreateRoom");
+  //   const createdRoom: RoomInterface = await this.roomService.createRoom(
+  //     room,
+  //     socket.data.user,
+  //     isPrivate,
+  //     password,
+  //   );
 
-    for (const user of createdRoom.users) {
-      const connections: ConnectedUserInterface[] =
-        await this.connectedUserService.findByUser(user);
-      const rooms = await this.roomService.getRoomsForUser(user.id, {
-        page: 1,
-        limit: 10,
-      });
-      rooms.meta.currentPage = rooms.meta.currentPage - 1;
-      for (const connection of connections) {
-        await this.server.to(connection.socketId).emit('rooms', rooms);
-      }
-    }
-  }
+  //   for (const user of createdRoom.users) {
+  //     const connections: ConnectedUserInterface[] =
+  //       await this.connectedUserService.findByUser(user);
+  //     const rooms = await this.roomService.getRoomsForUser(user.id, {
+  //       page: 1,
+  //       limit: 10,
+  //     });
+  //     rooms.meta.currentPage = rooms.meta.currentPage - 1;
+  //     for (const connection of connections) {
+  //       await this.server.to(connection.socketId).emit('rooms', rooms);
+  //     }
+  //   }
+  //   console.log("Fin de l'exécution de onCreateRoom");
+  // }
 
   @SubscribeMessage('joinRoom')
   async onJoinRoom(socket: Socket, room: RoomInterface) {
