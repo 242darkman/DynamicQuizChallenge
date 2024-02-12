@@ -22,20 +22,17 @@ export class RoomService {
 
   /**
    * Création  d'une salle
-   * @param roomData 
-   * @param creator 
-   * @param isPrivate 
-   * @param password 
-   * @returns 
+   * @param roomData
+   * @param creator
+   * @param isPrivate
+   * @param password
+   * @returns
    */
 
-
-  async createRoom(name : string, password:string){
+  async createRoom(name: string, password: string) {
     console.log('name est ', name);
     console.log('password est ', password);
-    return name
-
-
+    return name;
   }
   // async createRoom(
   //   roomData: RoomInterface,
