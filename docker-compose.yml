@@ -6,7 +6,7 @@ services:
     container_name: mysql_container
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_ROOT_PASSWORD: "" 
+      MYSQL_ROOT_PASSWORD: "root" 
       MYSQL_DATABASE: real_time_quizz
     ports:
       - "3306:3306"

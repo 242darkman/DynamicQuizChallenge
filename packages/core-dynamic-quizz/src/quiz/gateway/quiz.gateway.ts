@@ -82,6 +82,38 @@ export class QuizGateway
     socket.disconnect();
   }
 
+  // Test 
+  @SubscribeMessage('createRoom')
+  async onCreateRoom(socket: Socket, data: { name: string, password: string }) {
+    try {
+      const { name, password } = data;
+      console.log('le name est ' + name);
+      console.log('le password est ' + password);
+  
+      // Maintenant, vous pouvez effectuer les opérations nécessaires avec ces données,
+      // telles que la création d'une salle dans votre service de salle.
+  
+      // Exemple de création de salle (à adapter à votre implémentation réelle) :
+      // const createdRoom: RoomInterface = await this.roomService.createRoom({
+      //   name,
+      //   password,
+      //   // d'autres propriétés de la salle que vous pourriez avoir
+      // });
+  
+      // Vous pouvez également émettre un événement pour informer les clients du succès de la création de la salle.
+      // Par exemple :
+      //this.server.emit('roomCreated', createdRoom);
+  
+      // Vous pouvez retourner des données supplémentaires si nécessaire.
+      return socket;
+      //return { success: true, message: 'Room created successfully', room: createdRoom };
+    } catch (error) {
+      // Gérez les erreurs ici si nécessaire
+      console.error('Error creating room:', error);
+      return { success: false, message: 'Failed to create room' };
+    }
+  }
+
   // @SubscribeMessage('createRoom')
   // async onCreateRoom(
   //   socket: Socket,

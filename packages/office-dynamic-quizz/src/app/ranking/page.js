@@ -122,5 +122,4 @@ function Ranking() {
     </div>
   );
 }
-
 export default withAuth(Ranking);
