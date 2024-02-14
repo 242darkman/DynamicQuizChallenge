@@ -18,7 +18,12 @@ import { RoomService } from 'src/quiz/service/room/room.service';
 import { UserInterface } from 'src/user/model/user.interface';
 import { UserService } from 'src/user/service/user-service/user.service';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({
+  cors: {
+    origin: 'http://localhost:3000',
+    credentials: true,
+  },
+})
 export class QuizGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
