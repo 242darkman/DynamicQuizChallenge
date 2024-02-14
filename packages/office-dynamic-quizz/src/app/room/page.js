@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import withAuth from "@/app/middleware";
 
 function Room() {
@@ -15,6 +16,7 @@ function Room() {
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
   const [socket, setSocket] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("app_token");
@@ -29,17 +31,12 @@ function Room() {
 
     if (!newSocket.connected) newSocket.connect();
 
-    newSocket.on("connect", () => {
-      console.log("Connected to server", newSocket);
-    });
-
     newSocket.on('roomCreated', (room) => {
-      console.log('Room created successfully', room);
       toast.success(`Le salon "${room.name}" a été créé ! Préparez-vous à vivre des moments épiques !`);
+      router.push('/room/settings');
     });
 
     newSocket.on('joinedRoom', (room) => {
-      console.log(`Joined room successfully`, room);
       toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence !`);
     });
 
@@ -56,7 +53,7 @@ function Room() {
       newSocket.off('error');
       newSocket.disconnect();
     };
-  }, []);
+  }, [router]);
 
   const handleOpenModal = (type) => {
     setModalType(type);
