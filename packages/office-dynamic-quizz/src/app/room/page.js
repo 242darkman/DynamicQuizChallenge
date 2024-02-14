@@ -10,7 +10,7 @@ import withAuth from "@/app/middleware";
 
 function Room() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(""); // "create" ou "join"
+  const [modalType, setModalType] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
@@ -35,13 +35,14 @@ function Room() {
 
     newSocket.on('roomCreated', (room) => {
       console.log('Room created successfully', room);
-      toast.success("Salon créée avec succès !");
+      toast.success(`Le salon "${room.name}" a été créé ! Préparez-vous à vivre des moments épiques !`);
     });
 
     newSocket.on('joinedRoom', (room) => {
       console.log(`Joined room successfully`, room);
-      toast.success(`Bienvenue dans le salon ${room.name} !`);
+      toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence !`);
     });
+
 
     newSocket.on('error', (error) => {
       console.error('Error from server', error);
@@ -74,6 +75,14 @@ function Room() {
       isPrivate,
       ...(isPrivate && { password }),
     });
+
+    actionType === "createRoom" ? toast.success(`Salon en cours de création...`) : toast.success(`Attendez on dresse un tapis rouge pour que vous rejoignez le salon ${name}...`);
+
+    const waitingMessage = actionType === "createRoom" ? 
+    `Création du salon "${name}" en cours... Préparez-vous à devenir légendaire !` : 
+    `Tentative de rejoindre le salon "${name}"... Espérons que le tapis rouge soit déroulé !`;
+
+    toast.info(waitingMessage);
 
     setRoomName("");
     setPassword("");
@@ -117,7 +126,7 @@ function Room() {
           <Radio.Group
             onChange={(e) => setIsPrivate(e.target.value)}
             value={isPrivate}
-            className="mb-4"
+            className="mb-4 flex justify-around"
           >
             <Radio value={false}>Public</Radio>
             <Radio value={true}>Privé</Radio>
