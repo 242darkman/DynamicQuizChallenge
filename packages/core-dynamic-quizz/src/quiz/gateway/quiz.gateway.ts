@@ -121,17 +121,10 @@ export class QuizGateway
   }
 
   @SubscribeMessage('createRoom')
-  async onCreateRoom(
-    socket: Socket,
-    room: RoomInterface,
-    isPrivate: boolean,
-    password?: string,
-  ) {
+  async onCreateRoom(socket: Socket, room: RoomInterface) {
     const createdRoom: RoomInterface = await this.roomService.createRoom(
       room,
       socket.data.user,
-      isPrivate,
-      password,
     );
 
     for (const user of createdRoom.users) {
