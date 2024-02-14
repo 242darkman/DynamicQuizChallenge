@@ -139,6 +139,8 @@ export class QuizGateway
         await this.server.to(connection.socketId).emit('rooms', rooms);
       }
     }
+
+    this.server.to(socket.id).emit('roomCreated', createdRoom);
   }
 
   @SubscribeMessage('joinRoom')
