@@ -1,28 +1,62 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { Dropdown, Modal, Input } from "antd";
-import { io } from "socket.io-client";
-import withAuth from "@/app/middleware";
-import { toast } from "sonner";
 
-const SERVER_URL = "http://localhost:5000";
-const socket = io(SERVER_URL, { autoConnect: false });
+import { Dropdown, Input, Modal } from "antd";
+import React, { useEffect, useState } from "react";
+
+import { io } from "socket.io-client";
+import { toast } from "sonner";
+import withAuth from "@/app/middleware";
 
 function Room() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [titleModale, setTitleModale] = useState("");
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    if (!socket.connected) socket.connect();
-    socket.on("connect", () => {
-      console.log("Connecté au serveur", socket);
+    const token = localStorage.getItem("app_token");
+    const newSocket = io(process.env.NEXT_PUBLIC_SERVER_URL, {
+      autoConnect: false,
+      withCredentials: true,
+      extraHeaders: {
+        authorization: token,
+      },
+    });
+    setSocket(newSocket);
+    
+    if (!newSocket.connected) newSocket.connect();
+
+    newSocket.on("connect", () => {
+      console.log("Connected to server", newSocket);
+    });
+
+    // Écouteurs pour les réponses du serveur
+    newSocket.on('roomCreated', (room) => {
+      console.log('Room created successfully', room);
+      toast.success("Salle créée avec succès !");
+      // Mettez à jour l'état ici si nécessaire
+    });
+
+    newSocket.on('joinedRoom', (room) => {
+      console.log(`Joined room successfully`, room);
+      toast.success(`Bienvenue dans la salle ${room.name} !`);
+      // Mettez à jour l'état ici si nécessaire
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('Error from server', error);
+      toast.error("Erreur lors de l'opération !");
     });
 
     return () => {
-      socket.disconnect();
+      newSocket.off('connect');
+      newSocket.off('roomCreated');
+      newSocket.off('joinedRoom');
+      newSocket.off('error');
+      newSocket.disconnect();
     };
+    
   }, []);
 
   const handleChangePrivate = () => {
@@ -37,7 +71,7 @@ function Room() {
     },
     {
       key: "2",
-      label: <a>Publique</a>,
+      label: <a onClick={() => createPublicRoom()}>Publique</a>,
     },
   ];
 
@@ -46,24 +80,35 @@ function Room() {
   };
 
   /**
-   * Méthode pour créer une salle
-   * @param {*} event
-   * @returns
+   * création d'un salon public
    */
-  const handleOkPrivate = async (event) => {
-    event.preventDefault();
-    if (!name || !password) {
-      toast.error(
-        "Oups, il semblerait que vous ayez oublié de remplir un champ (ou deux). Merci de les compléter !"
-      );
+  const createPublicRoom = () => {
+    if (!name) {
+      toast.error("Veuillez indiquer le nom de la salle.");
       return;
     }
 
-    //console.log("le name est ", name);
-
-    // Émettre un événement pour créer une salle
     socket.emit("createRoom", {
-      // room: { name: name },
+      name,
+      isPrivate: false,
+    });
+
+    setRoomName("");
+  };
+
+  /**
+   * création d'un salon privé
+   * @param {*} event
+   * @returns
+   */
+  const handleCreatePrivateRoom = async (event) => {
+    event.preventDefault();
+    if (!name || !password) {
+      toast.error("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    socket.emit("createRoom", {
       name,
       isPrivate: true,
       password,
@@ -71,6 +116,7 @@ function Room() {
 
     setRoomName("");
     setPassword("");
+    setIsModalOpen(false);
   };
 
   return (
@@ -90,7 +136,7 @@ function Room() {
             className="w-1/2 px-4 py-2 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor w-full"
             style={{ whiteSpace: "nowrap" }}
           >
-            Créer une salle
+            Créer un salon
           </a>
         </Dropdown>
         <a
@@ -98,7 +144,7 @@ function Room() {
           className="w-1/2 px-4 py-2 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor w-full"
           style={{ whiteSpace: "nowrap" }}
         >
-          Rejoindre une salle
+          Rejoindre un salon
         </a>
       </div>
 
@@ -107,12 +153,12 @@ function Room() {
         open={isModalOpen}
         okText="Valider"
         okButtonProps={{ className: "bg-blue-500" }}
-        onOk={handleOkPrivate}
+        onOk={handleCreatePrivateRoom}
         onCancel={handleCancel}
       >
         <div className="flex flex-col gap-5">
           <Input
-            placeholder="Nom de la salle"
+            placeholder="Nom du salon"
             value={name}
             onChange={(e) => setRoomName(e.target.value)}
           />
