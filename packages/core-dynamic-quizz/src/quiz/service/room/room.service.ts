@@ -11,6 +11,7 @@ import { UserInterface } from 'src/user/model/user.interface';
 import { Repository } from 'typeorm';
 import { AuthService } from 'src/auth/service/auth.service';
 import { UserEntity } from 'src/user/model/user.entity';
+import get from 'lodash/get';
 
 @Injectable()
 export class RoomService {
@@ -32,18 +33,18 @@ export class RoomService {
   async createRoom(
     roomData: RoomInterface,
     creator: UserInterface,
-    isPrivate: boolean,
-    password?: string,
   ): Promise<RoomInterface> {
-    console.log("Début de l'exécution de createRoom");
+    const password = get(roomData, 'password');
+    const isPrivate = get(roomData, 'isPrivate');
     const newRoom = new RoomEntity();
+
     Object.assign(newRoom, roomData);
-    newRoom.isPrivate = isPrivate;
+
     if (isPrivate && password) {
       newRoom.password = await this.authService.hashPassword(password);
     }
+
     newRoom.users = [creator as UserEntity];
-    console.log("Fin de l'exécution de createRoom");
     return this.roomRepository.save(newRoom);
   }
 
