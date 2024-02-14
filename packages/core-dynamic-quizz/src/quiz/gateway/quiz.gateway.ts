@@ -1,3 +1,5 @@
+import { InjectRedis } from '@nestjs-modules/ioredis';
+import Redis from 'ioredis';
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import {
   OnGatewayConnection,
@@ -28,11 +30,13 @@ export class QuizGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   public readonly logger = new Logger(QuizGateway.name);
+  private activeSockets = new Set<string>();
 
   @WebSocketServer()
   server: Server;
 
   constructor(
+    @InjectRedis() private readonly redisClient: Redis,
     private authService: AuthService,
     private userService: UserService,
     private roomService: RoomService,
@@ -41,86 +45,117 @@ export class QuizGateway
   ) {}
 
   async afterInit() {
-    this.logger.log(`Gateway ${QuizGateway.name} initialized`);
+    this.logger.debug(`Gateway ${QuizGateway.name} websockets initialized. `);
+
+    await this.redisClient.del('rooms');
+    await this.redisClient.del('connectedUsers');
+    await this.redisClient.del('joinedRooms');
     await this.connectedUserService.deleteAll();
     await this.joinedRoomService.deleteAll();
   }
-  async handleConnection(client: any, socket: Socket) {
+
+  async retrieveAndCacheUser(token, cacheKey) {
+    const decodedToken = await this.authService.verifyJwt(token);
+    const user = await this.userService.getOne(decodedToken.user.id);
+    await this.redisClient.set(cacheKey, JSON.stringify(user), 'EX', 3600); // Expire après 1 heure
+    return user;
+  }
+
+  async handleConnection(client: Socket) {
+    this.activeSockets.add(client.id);
     const { sockets } = this.server.sockets;
     this.logger.debug(`Client id: ${client.id} connected`);
     this.logger.debug(`Number of connected clients: ${sockets.size}`);
 
-    /*try {
-      const decodedToken = await this.authService.verifyJwt(
-        socket.handshake.headers.authorization,
-      );
-      const user: UserInterface = await this.userService.getOne(
-        decodedToken.user.id,
-      );
+    try {
+      const token = client.handshake.headers.authorization;
+      const cacheKey = `user:${token}`;
+      const cachedUser = await this.redisClient.get(cacheKey);
+      const user: UserInterface = cachedUser
+        ? JSON.parse(cachedUser)
+        : await this.retrieveAndCacheUser(token, cacheKey);
 
       if (!user) {
-        return this.disconnect(socket);
+        this.disconnect(client);
       } else {
-        socket.data.user = user;
-        const rooms = await this.roomService.getRoomsForUser(user.id, {
-          page: 1,
-          limit: 10,
-        });
-        rooms.meta.currentPage = rooms.meta.currentPage - 1;
-        // Sauvegarder la connexion à la base de données
-        await this.connectedUserService.create({ socketId: socket.id, user });
-        // N'émet des salles que vers le client connecté spécifique
-        return this.server.to(socket.id).emit('rooms', rooms);
+        client.data.user = user;
+        await this.cacheConnectedUser(client.id, user);
+        this.emitUserRooms(client, user.id);
       }
-    } catch {
-      return this.disconnect(socket);
-    }*/
+    } catch (error) {
+      this.logger.debug(
+        `Disconnecting socket with id: ${client?.id} due to error: ${error.message}`,
+      );
+      this.disconnect(client);
+    }
   }
-  async handleDisconnect(socket: Socket) {
-    // supprimer la connexion de la base de données
-    await this.connectedUserService.deleteBySocketId(socket.id);
-    socket.disconnect();
+
+  async handleDisconnect(client: Socket) {
+    this.logger.log(`Client disconnected: ${client.id}`);
+    if (this.activeSockets.has(client.id)) {
+      this.activeSockets.delete(client.id);
+      await this.connectedUserService.deleteBySocketId(client.id);
+      await this.invalidateCacheForUserDisconnect(client.data.user.id);
+      client.disconnect();
+    } else {
+      this.logger.error(
+        `Socket with id: ${client.id} was not tracked as active.`,
+      );
+    }
   }
 
   private disconnect(socket: Socket) {
-    socket.emit('Error', new UnauthorizedException());
-    socket.disconnect();
+    if (!socket) {
+      this.logger.error('Socket is undefined, cannot proceed with disconnect.');
+      return;
+    }
+
+    try {
+      socket.emit('Error', new UnauthorizedException());
+      socket.disconnect();
+    } catch (error) {
+      this.logger.error(
+        `Error disconnecting socket with id: ${socket.id}: ${error.message}`,
+      );
+    }
   }
 
-  // @SubscribeMessage('createRoom')
-  // async onCreateRoom(
-  //   socket: Socket,
-  //   room: RoomInterface,
-  //   isPrivate: boolean,
-  //   password?: string,
-  // ) {
-  //   console.log("Début de l'exécution de onCreateRoom");
-  //   const createdRoom: RoomInterface = await this.roomService.createRoom(
-  //     room,
-  //     socket.data.user,
-  //     isPrivate,
-  //     password,
-  //   );
+  @SubscribeMessage('createRoom')
+  async onCreateRoom(
+    socket: Socket,
+    room: RoomInterface,
+    isPrivate: boolean,
+    password?: string,
+  ) {
+    const createdRoom: RoomInterface = await this.roomService.createRoom(
+      room,
+      socket.data.user,
+      isPrivate,
+      password,
+    );
 
-  //   for (const user of createdRoom.users) {
-  //     const connections: ConnectedUserInterface[] =
-  //       await this.connectedUserService.findByUser(user);
-  //     const rooms = await this.roomService.getRoomsForUser(user.id, {
-  //       page: 1,
-  //       limit: 10,
-  //     });
-  //     rooms.meta.currentPage = rooms.meta.currentPage - 1;
-  //     for (const connection of connections) {
-  //       await this.server.to(connection.socketId).emit('rooms', rooms);
-  //     }
-  //   }
-  //   console.log("Fin de l'exécution de onCreateRoom");
-  // }
+    for (const user of createdRoom.users) {
+      const connections: ConnectedUserInterface[] =
+        await this.connectedUserService.findByUser(user);
+      const rooms = await this.roomService.getRoomsForUser(user.id, {
+        page: 1,
+        limit: 10,
+      });
+      rooms.meta.currentPage = rooms.meta.currentPage - 1;
+      for (const connection of connections) {
+        await this.server.to(connection.socketId).emit('rooms', rooms);
+      }
+    }
+  }
 
   @SubscribeMessage('joinRoom')
   async onJoinRoom(socket: Socket, room: RoomInterface) {
     // Save Connection to Room
-    //await this.joinedRoomService.create({ socketId: socket.id, user: socket.data.user, room });
+    await this.joinedRoomService.create({
+      socketId: socket.id,
+      user: socket.data.user,
+      room,
+    });
     // Send last messages from Room to User
     await this.server
       .to(socket.id)
@@ -133,9 +168,39 @@ export class QuizGateway
     await this.joinedRoomService.deleteBySocketId(socket.id);
   }
 
-  @SubscribeMessage('message')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handleMessage(client: any, payload: any): string {
-    return `Hello world !, this is the ${QuizGateway.name}`;
+  private async cacheConnectedUser(socketId: string, user: UserInterface) {
+    const cacheKey = `connectedUsers:${user.id}`;
+    const existing = await this.redisClient.get(cacheKey);
+    const connections = existing ? JSON.parse(existing) : [];
+    connections.push(socketId);
+    await this.redisClient.set(
+      cacheKey,
+      JSON.stringify(connections),
+      'EX',
+      3600,
+    ); // Expire après 1 heure
+  }
+
+  private async emitUserRooms(socket: Socket, userId: number) {
+    const cacheKey = `rooms:user:${userId}`;
+    const cachedRooms = await this.redisClient.get(cacheKey);
+    const rooms = cachedRooms
+      ? JSON.parse(cachedRooms)
+      : await this.roomService.getRoomsForUser(userId, { page: 1, limit: 10 });
+    await this.redisClient.set(cacheKey, JSON.stringify(rooms), 'EX', 3600); // Expire après 1 heure
+    rooms.meta.currentPage = rooms.meta.currentPage - 1;
+    this.server.to(socket.id).emit('rooms', rooms);
+  }
+
+  private async invalidateCachedRoomsForUser(userId: string) {
+    const cacheKey = `rooms:user:${userId}`;
+    await this.redisClient.del(cacheKey);
+  }
+
+  private async invalidateCacheForUserDisconnect(userId: string) {
+    const cacheKey = `connectedUsers:${userId}`;
+    await this.redisClient.del(cacheKey);
+    // Invalider également le cache des salles de cet utilisateur
+    await this.invalidateCachedRoomsForUser(userId);
   }
 }
