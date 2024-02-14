@@ -1,15 +1,17 @@
 "use client";
 
-import { Dropdown, Input, Modal } from "antd";
+import { Input, Modal, Radio } from "antd";
 import React, { useEffect, useState } from "react";
 
 import { io } from "socket.io-client";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import withAuth from "@/app/middleware";
 
 function Room() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [titleModale, setTitleModale] = useState("");
+  const [modalType, setModalType] = useState(""); // "create" ou "join"
+  const [isPrivate, setIsPrivate] = useState(false);
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
   const [socket, setSocket] = useState(null);
@@ -24,24 +26,21 @@ function Room() {
       },
     });
     setSocket(newSocket);
-    
+
     if (!newSocket.connected) newSocket.connect();
 
     newSocket.on("connect", () => {
       console.log("Connected to server", newSocket);
     });
 
-    // Écouteurs pour les réponses du serveur
     newSocket.on('roomCreated', (room) => {
       console.log('Room created successfully', room);
-      toast.success("Salle créée avec succès !");
-      // Mettez à jour l'état ici si nécessaire
+      toast.success("Salon créée avec succès !");
     });
 
     newSocket.on('joinedRoom', (room) => {
       console.log(`Joined room successfully`, room);
-      toast.success(`Bienvenue dans la salle ${room.name} !`);
-      // Mettez à jour l'état ici si nécessaire
+      toast.success(`Bienvenue dans le salon ${room.name} !`);
     });
 
     newSocket.on('error', (error) => {
@@ -56,62 +55,24 @@ function Room() {
       newSocket.off('error');
       newSocket.disconnect();
     };
-    
   }, []);
 
-  const handleChangePrivate = () => {
-    setTitleModale("Salle privée");
+  const handleOpenModal = (type) => {
+    setModalType(type);
     setIsModalOpen(true);
   };
 
-  const items = [
-    {
-      key: "1",
-      label: <a onClick={handleChangePrivate}>Privée</a>,
-    },
-    {
-      key: "2",
-      label: <a onClick={() => createPublicRoom()}>Publique</a>,
-    },
-  ];
-
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
-
-  /**
-   * création d'un salon public
-   */
-  const createPublicRoom = () => {
-    if (!name) {
-      toast.error("Veuillez indiquer le nom de la salle.");
-      return;
-    }
-
-    socket.emit("createRoom", {
-      name,
-      isPrivate: false,
-    });
-
-    setRoomName("");
-  };
-
-  /**
-   * création d'un salon privé
-   * @param {*} event
-   * @returns
-   */
-  const handleCreatePrivateRoom = async (event) => {
-    event.preventDefault();
-    if (!name || !password) {
+  const handleAction = async () => {
+    if (!name || (isPrivate && !password)) {
       toast.error("Veuillez remplir tous les champs.");
       return;
     }
 
-    socket.emit("createRoom", {
+    const actionType = modalType === "create" ? "createRoom" : "joinRoom";
+    socket.emit(actionType, {
       name,
-      isPrivate: true,
-      password,
+      isPrivate,
+      ...(isPrivate && { password }),
     });
 
     setRoomName("");
@@ -125,49 +86,57 @@ function Room() {
         <h1 className="text-5xl">Que souhaitez-vous faire ?</h1>
       </div>
       <div className="flex items-center justify-center gap-10 m-10">
-        <Dropdown
-          menu={{
-            items,
-          }}
-          placement="bottomLeft"
-          arrow
+        <button
+          onClick={() => handleOpenModal("create")}
+          className="px-7 py-4 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor"
         >
-          <a
-            className="w-1/2 px-4 py-2 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor w-full"
-            style={{ whiteSpace: "nowrap" }}
-          >
-            Créer un salon
-          </a>
-        </Dropdown>
-        <a
-          href="/waiting-room"
-          className="w-1/2 px-4 py-2 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor w-full"
-          style={{ whiteSpace: "nowrap" }}
+          Créer un salon
+        </button>
+        <button
+          onClick={() => handleOpenModal("join")}
+          className="px-7 py-4 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor"
         >
           Rejoindre un salon
-        </a>
+        </button>
       </div>
 
       <Modal
-        title={titleModale}
+        title={`${modalType === "create" ? "Créer" : "Rejoindre"} un salon`}
         open={isModalOpen}
+        onOk={handleAction}
+        okButtonProps={{ className: "bg-mainColor text-white hover:bg-violet-400" }}
+        onCancel={() => setIsModalOpen(false)}
         okText="Valider"
-        okButtonProps={{ className: "bg-blue-500" }}
-        onOk={handleCreatePrivateRoom}
-        onCancel={handleCancel}
+        cancelText="Annuler"
       >
-        <div className="flex flex-col gap-5">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Radio.Group
+            onChange={(e) => setIsPrivate(e.target.value)}
+            value={isPrivate}
+            className="mb-4"
+          >
+            <Radio value={false}>Public</Radio>
+            <Radio value={true}>Privé</Radio>
+          </Radio.Group>
           <Input
             placeholder="Nom du salon"
             value={name}
             onChange={(e) => setRoomName(e.target.value)}
+            className="mb-4"
           />
-          <Input
-            placeholder="Mot de passe"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+          {isPrivate && (
+            <Input
+              placeholder="Mot de passe"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </motion.div>
       </Modal>
     </div>
   );
