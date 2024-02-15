@@ -19,17 +19,6 @@ export class QuizService {
     return this.quizRepository.save(newQuiz);
   }
 
-  async getAllQuizzes(): Promise<QuizEntity[]> {
-    return this.quizRepository.find({ relations: ['subjects', 'room'] });
-  }
-
-  async getQuizById(id: number): Promise<QuizEntity> {
-    return this.quizRepository.findOne({
-      where: { id },
-      relations: ['subjects', 'room'],
-    });
-  }
-
   async getUserScores(): Promise<any[]> {
     const query = this.userRepository
       .createQueryBuilder('user')

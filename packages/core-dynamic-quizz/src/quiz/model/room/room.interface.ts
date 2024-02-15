@@ -1,7 +1,7 @@
 import { UserInterface } from 'src/user/model/user.interface';
 
 export interface RoomInterface {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   users: UserInterface[];

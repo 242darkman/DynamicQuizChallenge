@@ -1,9 +1,6 @@
-import { SubjectInterface } from 'src/quiz/model/subject/subject.interface';
-
 export interface QuizInterface {
-  id: number;
+  id: string;
   name: string;
-  subjects: SubjectInterface[];
   difficulty: 'easy' | 'medium' | 'hard' | 'mixed';
   randomizeSubjects: boolean;
   isPrivate: boolean;
