@@ -2,25 +2,19 @@ import {
   Column,
   Entity,
   JoinTable,
-  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import { RoomEntity } from 'src/quiz/model/room/room.entity';
-import { SubjectEntity } from 'src/quiz/model/subject/subject.entity';
 
 @Entity()
 export class QuizEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   name: string;
-
-  @ManyToMany(() => SubjectEntity)
-  @JoinTable()
-  subjects: SubjectEntity[];
 
   @Column({
     type: 'enum',
@@ -28,9 +22,6 @@ export class QuizEntity {
     default: 'medium',
   })
   difficulty: 'easy' | 'medium' | 'hard' | 'mixed';
-
-  @Column({ default: false })
-  randomizeSubjects: boolean;
 
   @ManyToOne(() => RoomEntity, (room) => room.quiz)
   @JoinTable()

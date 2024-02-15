@@ -15,8 +15,8 @@ import { UserEntity } from 'src/user/model/user.entity';
 
 @Entity()
 export class RoomEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   name: string;

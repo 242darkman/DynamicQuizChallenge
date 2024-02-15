@@ -49,7 +49,7 @@ export class RoomService {
   }
 
   async joinRoom(
-    roomId: number,
+    roomId: string,
     user: UserInterface,
     password?: string,
   ): Promise<RoomInterface> {

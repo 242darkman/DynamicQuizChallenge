@@ -78,29 +78,4 @@ export class OpenAIService {
       throw new Error(`Error generating hint: ${error}`);
     }
   }
-
-  async generateQuizSubjects(numberOfSubjects: number = 3): Promise<string[]> {
-    try {
-      const subjectsArray = [];
-      while (subjectsArray.length < numberOfSubjects) {
-        const response = await this.openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: 'Generate a unique subject for a quiz.',
-            },
-          ],
-        });
-
-        const subject = response.choices[0].message.content.trim();
-        if (subject && !subjectsArray.includes(subject)) {
-          subjectsArray.push(subject);
-        }
-      }
-      return subjectsArray;
-    } catch (error) {
-      throw new Error(`Error generating quiz subjects: ${error}`);
-    }
-  }
 }

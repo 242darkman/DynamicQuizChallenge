@@ -1,7 +1,7 @@
 import { UserInterface } from 'src/user/model/user.interface';
 
 export interface ConnectedUserInterface {
-  id?: number;
+  id?: string;
   socketId: string;
   user: UserInterface;
 }
