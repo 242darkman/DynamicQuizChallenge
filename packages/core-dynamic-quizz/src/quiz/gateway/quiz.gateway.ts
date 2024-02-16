@@ -145,13 +145,13 @@ export class QuizGateway
 
   @SubscribeMessage('joinRoom')
   async onJoinRoom(socket: Socket, room: RoomInterface) {
-    // Save Connection to Room
+    // Sauvegarder la connexion dans le salon
     await this.joinedRoomService.create({
       socketId: socket.id,
       user: socket.data.user,
       room,
     });
-    // Send last messages from Room to User
+    // Envoi des derniers messages du salon à l'utilisateur
     await this.server
       .to(socket.id)
       .emit('quiz', [{ message: `Welcome to the room ${room.name} !` }]);
@@ -159,7 +159,7 @@ export class QuizGateway
 
   @SubscribeMessage('leaveRoom')
   async onLeaveRoom(socket: Socket) {
-    // remove connection from JoinedRooms
+    // supprime la connexion du salon rejoint
     await this.joinedRoomService.deleteBySocketId(socket.id);
   }
 
@@ -176,7 +176,7 @@ export class QuizGateway
     ); // Expire après 1 heure
   }
 
-  private async emitUserRooms(socket: Socket, userId: number) {
+  private async emitUserRooms(socket: Socket, userId: string) {
     const cacheKey = `rooms:user:${userId}`;
     const cachedRooms = await this.redisClient.get(cacheKey);
     const rooms = cachedRooms
