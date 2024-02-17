@@ -3,10 +3,11 @@
 import { Input, Modal, Radio } from "antd";
 import React, { useEffect, useState } from "react";
 
-import { io } from "socket.io-client";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { useRoom } from '@/app/_context/RoomContext';
 import { useRouter } from "next/navigation";
+import { useSocket } from '@/app/_context/SocketContext';
 import withAuth from "@/app/middleware";
 
 function Room() {
@@ -15,45 +16,33 @@ function Room() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
-  const [socket, setSocket] = useState(null);
   const router = useRouter();
+  const { storeRoomData } = useRoom();
+  const socket = useSocket();
 
   useEffect(() => {
-    const token = localStorage.getItem("app_token");
-    const newSocket = io(process.env.NEXT_PUBLIC_SERVER_URL, {
-      autoConnect: false,
-      withCredentials: true,
-      extraHeaders: {
-        authorization: token,
-      },
-    });
-    setSocket(newSocket);
+    if (!socket) return;
 
-    if (!newSocket.connected) newSocket.connect();
-
-    newSocket.on('roomCreated', (room) => {
-      toast.success(`Le salon "${room.name}" a été créé ! Préparez-vous à vivre des moments épiques !`);
-      router.push('/room/settings');
-    });
-
-    newSocket.on('joinedRoom', (room) => {
+    const handleJoinRoom = (room) => {
       toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence !`);
-    });
+    };
 
+    const handleError = (error) => {
+      console.error("Error from server:", error);
+      toast.error("Un petit souci... le serveur fait des siennes !");
+    };
 
-    newSocket.on('error', (error) => {
-      console.error('Error from server', error);
-      toast.error("Erreur lors de l'opération !");
-    });
+    socket.on('joinedRoom', handleJoinRoom);
+    socket.on('error', handleError);
 
     return () => {
-      newSocket.off('connect');
-      newSocket.off('roomCreated');
-      newSocket.off('joinedRoom');
-      newSocket.off('error');
-      newSocket.disconnect();
+      if (socket) {
+        socket.off('joinedRoom', handleJoinRoom);
+        socket.off('error', handleError);
+      }
     };
-  }, [router]);
+  }, [socket]);
+
 
   const handleOpenModal = (type) => {
     setModalType(type);
@@ -62,28 +51,31 @@ function Room() {
 
   const handleAction = async () => {
     if (!name || (isPrivate && !password)) {
-      toast.error("Veuillez remplir tous les champs.");
+      toast.error("Il nous faut un peu plus d'info pour lancer cette fusée !");
       return;
     }
 
     const actionType = modalType === "create" ? "createRoom" : "joinRoom";
-    socket.emit(actionType, {
+    
+    if (socket) {
+      socket.emit(actionType, {
+        name,
+        isPrivate,
+        ...(isPrivate && { password }),
+      });
+    }
+
+    storeRoomData({
       name,
       isPrivate,
-      ...(isPrivate && { password }),
+      password: isPrivate ? password : undefined,
     });
 
-    actionType === "createRoom" ? toast.success(`Salon en cours de création...`) : toast.success(`Attendez on dresse un tapis rouge pour que vous rejoignez le salon ${name}...`);
-
-    const waitingMessage = actionType === "createRoom" ? 
-    `Création du salon "${name}" en cours... Préparez-vous à devenir légendaire !` : 
-    `Tentative de rejoindre le salon "${name}"... Espérons que le tapis rouge soit déroulé !`;
-
-    toast.info(waitingMessage);
-
-    setRoomName("");
-    setPassword("");
     setIsModalOpen(false);
+
+    router.push("/room/settings");
+
+    toast.info(`Destination : paramètres du salon "${name}". Préparez votre équipement !`);
   };
 
   return (
@@ -112,7 +104,7 @@ function Room() {
         onOk={handleAction}
         okButtonProps={{ className: "bg-mainColor text-white hover:bg-violet-400" }}
         onCancel={() => setIsModalOpen(false)}
-        okText="Valider"
+        okText="C'est parti !"
         cancelText="Annuler"
       >
         <motion.div
