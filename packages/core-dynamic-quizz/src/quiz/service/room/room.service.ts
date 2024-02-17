@@ -80,14 +80,16 @@ export class RoomService {
   }
 
   async joinRoom(
-    roomId: string,
+    identifier: string,
     user: UserInterface,
     password?: string,
   ): Promise<RoomInterface> {
-    const room = await this.roomRepository.findOne({
-      where: { id: roomId },
-      relations: ['users'],
-    });
+    const room = await this.roomRepository
+      .createQueryBuilder('room')
+      .where('room.id = :identifier OR room.name = :identifier', { identifier })
+      .leftJoinAndSelect('room.users', 'users')
+      .leftJoinAndSelect('room.settings', 'settings')
+      .getOne();
 
     if (!room) {
       throw new Error('Room not found');

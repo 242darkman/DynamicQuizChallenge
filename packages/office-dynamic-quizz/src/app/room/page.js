@@ -17,14 +17,14 @@ function Room() {
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { storeRoomData } = useRoom();
+  const { storeRoomData, storeRoomUsers } = useRoom();
   const socket = useSocket();
 
   useEffect(() => {
     if (!socket) return;
 
     const handleJoinRoom = (room) => {
-      toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence !`);
+      toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence bientôt !`);
     };
 
     const handleError = (error) => {
@@ -33,15 +33,25 @@ function Room() {
     };
 
     socket.on('joinedRoom', handleJoinRoom);
+
+    socket.on('updateRoomUsers', (room) => {
+      storeRoomUsers(room.users);
+
+      toast.success('Enfilez votre plus beau pyjama et préparez le popcorn, vous êtes en salle d\'attente ! On vous fait entrer dès qu\'une place se libère sur le canapé virtuel. 🛋️🍿');
+
+      router.push('/room/waiting-room');
+    });
+
     socket.on('error', handleError);
 
     return () => {
       if (socket) {
         socket.off('joinedRoom', handleJoinRoom);
+        socket.off('updateRoomUsers');
         socket.off('error', handleError);
       }
     };
-  }, [socket]);
+  }, [socket, router, storeRoomUsers]);
 
 
   const handleOpenModal = (type) => {
@@ -57,12 +67,14 @@ function Room() {
 
     const actionType = modalType === "create" ? "createRoom" : "joinRoom";
     
-    if (socket) {
+    if (socket && actionType === "joinRoom") {
       socket.emit(actionType, {
-        name,
+        identifier: name,
         isPrivate,
         ...(isPrivate && { password }),
       });
+
+      return;
     }
 
     storeRoomData({
@@ -79,7 +91,7 @@ function Room() {
   };
 
   return (
-    <div className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col">
+    <div className="min-h-screen p-24 bg-[url('/landscape.svg')] flex items-center justify-center flex-col">
       <div>
         <h1 className="text-5xl">Que souhaitez-vous faire ?</h1>
       </div>

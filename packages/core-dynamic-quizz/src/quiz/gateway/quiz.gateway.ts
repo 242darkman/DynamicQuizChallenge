@@ -230,19 +230,41 @@ export class QuizGateway
    * @return {Promise<void>} A promise that resolves when the function completes
    */
   @SubscribeMessage('joinRoom')
-  async onJoinRoom(socket: Socket, room: RoomInterface) {
-    // save room connexion
-    await this.joinedRoomService.create({
-      socketId: socket.id,
-      user: socket.data.user,
-      room,
-    });
+  async onJoinRoom(
+    client: Socket,
+    { identifier, password }: { identifier: string; password?: string },
+  ) {
+    try {
+      const user: UserInterface = client.data.user;
+      const room: RoomInterface = await this.roomService.joinRoom(
+        identifier,
+        user,
+        password,
+      );
 
-    // retrieved room settings
-    const roomSettings = await this.roomSettingService.findByRoomId(room.id);
+      // save room connexion
+      await this.joinedRoomService.create({
+        socketId: client.id,
+        user,
+        room,
+      });
 
-    // emit settings room to the client
-    await this.server.to(socket.id).emit('roomSettings', roomSettings);
+      this.server.to(client.id).emit('updateRoomUsers', {
+        success: true,
+        room,
+      });
+
+      this.logger.log(`User ${user.id} joined room ${room.id}`);
+    } catch (error) {
+      this.logger.error(
+        `Erreur lors de la tentative de rejoindre une salle : ${error.message}`,
+      );
+      this.server.to(client.id).emit('error', {
+        success: false,
+        message:
+          "Oups ! Quelque chose s'est mal passé. Veuillez réessayer plus tard. 🤷‍♂️",
+      });
+    }
   }
 
   /**
