@@ -42,7 +42,7 @@ function RoomSettings() {
         socket.off('error', handleError);
       };
     }
-  }, [socket, router, roomData.name, clearRoomData]);
+  }, [socket, router, clearRoomData]);
 
   const createRoom = (room) => {
     if (socket) {
@@ -71,7 +71,7 @@ function RoomSettings() {
       createRoom(newRoom);
     }
 
-    toast.error(`Paramètres enregistrés pour "${roomData.name}" non valides. Les matériaux de construction du salon ne sont pas bons...`);
+    toast.error(`Paramètres enregistrés pour "${newRoom.room.name}" non valides. Les matériaux de construction du salon ne sont pas bons...`);
 
     return;
     
