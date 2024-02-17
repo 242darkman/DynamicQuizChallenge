@@ -1,11 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRoom } from '@/app/_context/RoomContext';
 import withAuth from "@/app/middleware";
 
 function Question() {
   const router = useRouter();
+  const { clearRoomData } = useRoom();
+
+  useEffect(() => {
+    clearRoomData();
+  })
 
   return (
     <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">

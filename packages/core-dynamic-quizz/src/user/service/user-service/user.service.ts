@@ -99,20 +99,20 @@ export class UserService {
   /**
    * Cherche et récupère un utilisateur par son identifiant.
    *
-   * @param {number} id - L'ID de l'utilisateur à trouver.
+   * @param {string} id - L'ID de l'utilisateur à trouver.
    * @return {Promise<UserInterface>} Une promesse qui se résout à l'objet utilisateur.
    */
-  private async findOne(id: number): Promise<UserInterface> {
+  private async findOne(id: string): Promise<UserInterface> {
     return this.userRepository.findOne({ where: { id } });
   }
 
   /**
    * Récupère un utilisateur unique en utilisant son ID.
    *
-   * @param {number} id - L'ID de l'utilisateur à récupérer.
+   * @param {string} id - L'ID de l'utilisateur à récupérer.
    * @return {Promise<UserInterface>} Une Promise qui se résout à l'objet utilisateur.
    */
-  public getOne(id: number): Promise<UserInterface> {
+  public getOne(id: string): Promise<UserInterface> {
     return this.userRepository.findOneOrFail({ where: { id } });
   }
 
