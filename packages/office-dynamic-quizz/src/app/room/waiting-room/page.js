@@ -12,7 +12,7 @@ function WaitingHome() {
   }, []);
 
   return (
-    <main className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col">
+    <main className="min-h-screen p-24 bg-[url('/landscape.svg')] flex items-center justify-center flex-col">
       {participants.length < REQUIRED_NUMBER_OF_PARTICIPANTS ? (
         <div>
           <p>En attente des autres participants...</p>
