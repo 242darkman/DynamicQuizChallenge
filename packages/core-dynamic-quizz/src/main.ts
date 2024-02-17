@@ -12,6 +12,7 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       `http://localhost:${process.env.CLIENT_PORT}`,
+      `http://127.0.0.1:${process.env.CLIENT_PORT}`,
       new RegExp(
         `/^http:\/\/192\.168\.1\.([1-9]|[1-9]\d):${process.env.CLIENT_PORT}$/`,
       ),

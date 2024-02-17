@@ -9,6 +9,7 @@ import { useRoom } from '@/app/_context/RoomContext';
 import { useRouter } from "next/navigation";
 import { useSocket } from '@/app/_context/SocketContext';
 import withAuth from "@/app/middleware";
+import { root } from "postcss";
 
 function Room() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +18,7 @@ function Room() {
   const [name, setRoomName] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { storeRoomData, storeRoomUsers } = useRoom();
+  const { storeRoomData, storeRoomUsers, setRooms, storeRoomSettings } = useRoom();
   const socket = useSocket();
 
   useEffect(() => {
@@ -35,6 +36,8 @@ function Room() {
     socket.on('joinedRoom', handleJoinRoom);
 
     socket.on('updateRoomUsers', (room) => {
+      setRooms(room);
+      storeRoomSettings(room.settings);
       storeRoomUsers(room.users);
 
       toast.success('Enfilez votre plus beau pyjama et préparez le popcorn, vous êtes en salle d\'attente ! On vous fait entrer dès qu\'une place se libère sur le canapé virtuel. 🛋️🍿');
