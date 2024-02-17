@@ -6,64 +6,90 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { RoomEntity } from 'src/quiz/model/room/room.entity';
+import { RoomSettingEntity } from 'src/quiz/model/room/setting/room-setting.entity';
 import { RoomInterface } from 'src/quiz/model/room/room.interface';
+import { RoomSettingInterface } from 'src/quiz/model/room/setting/room-setting.interface';
 import { UserInterface } from 'src/user/model/user.interface';
 import { Repository } from 'typeorm';
 import { AuthService } from 'src/auth/service/auth.service';
 import { UserEntity } from 'src/user/model/user.entity';
+import get from 'lodash/get';
 
 @Injectable()
 export class RoomService {
   constructor(
     @InjectRepository(RoomEntity)
     private readonly roomRepository: Repository<RoomEntity>,
+    @InjectRepository(RoomSettingEntity)
+    private readonly roomSettingRepository: Repository<RoomSettingEntity>,
     private readonly authService: AuthService,
   ) {}
 
   /**
-   * Création  d'une salle
-   * @param roomData 
-   * @param creator 
-   * @param isPrivate 
-   * @param password 
-   * @returns 
+   * Create a new room with settings.
+   *
+   * @param {RoomInterface} roomData - the data for the room
+   * @param {RoomSettingInterface} settingsData - the settings for the room
+   * @param {UserInterface} creator - the user creating the room
+   * @return {Promise<RoomInterface>} the newly created room
    */
+  async createRoomWithSettings(
+    roomData: RoomInterface,
+    settingsData: RoomSettingInterface,
+    creator: UserInterface,
+  ): Promise<RoomInterface | null> {
+    // Validation of key data
+    if (!roomData || !settingsData || !creator) {
+      console.error('Room data, parameters or creator are missing.');
+      return null; // Returns null to indicate failure due to invalid data.
+    }
 
+    const password = get(roomData, 'password');
+    const isPrivate = get(roomData, 'isPrivate');
+    const newRoom = this.roomRepository.create(roomData);
 
-  async createRoom(name : string, password:string){
-    console.log('name est ', name);
-    console.log('password est ', password);
-    return name
+    // Conditionally hash the password if the room is private and a password is provided.
+    const hashedPassword =
+      isPrivate && password
+        ? await this.authService.hashPassword(password)
+        : null;
+    if (hashedPassword) {
+      newRoom.password = hashedPassword;
+    }
 
+    newRoom.users = [creator as UserEntity];
 
+    // Save the room
+    const savedRoom = await this.roomRepository.save(newRoom);
+
+    // Create and associate room parameters
+    const newRoomSetting = this.roomSettingRepository.create({
+      ...settingsData,
+      room: savedRoom,
+    });
+
+    await this.roomSettingRepository.save(newRoomSetting);
+
+    // Returns the room with associated parameters
+    const resultRoom = await this.roomRepository.findOne({
+      where: { id: savedRoom.id },
+      relations: ['settings', 'users'],
+    });
+
+    return resultRoom ? resultRoom : null; // Returns null if the room is not found for any reason.
   }
-  // async createRoom(
-  //   roomData: RoomInterface,
-  //   creator: UserInterface,
-  //   isPrivate: boolean,
-  //   password?: string,
-  // ): Promise<RoomInterface> {
-  //   console.log("Début de l'exécution de createRoom");
-  //   const newRoom = new RoomEntity();
-  //   Object.assign(newRoom, roomData);
-  //   newRoom.isPrivate = isPrivate;
-  //   if (isPrivate && password) {
-  //     newRoom.password = await this.authService.hashPassword(password);
-  //   }
-  //   newRoom.users = [creator as UserEntity];
-  //   console.log("Fin de l'exécution de createRoom");
-  //   return this.roomRepository.save(newRoom);
-  // }
 
   async joinRoom(
-    roomId: number,
+    identifier: string,
     user: UserInterface,
     password?: string,
   ): Promise<RoomInterface> {
-    const room = await this.roomRepository.findOne({
-      where: { id: roomId },
-      relations: ['users'],
-    });
+    const room = await this.roomRepository
+      .createQueryBuilder('room')
+      .where('room.id = :identifier OR room.name = :identifier', { identifier })
+      .leftJoinAndSelect('room.users', 'users')
+      .leftJoinAndSelect('room.settings', 'settings')
+      .getOne();
 
     if (!room) {
       throw new Error('Room not found');
@@ -83,7 +109,7 @@ export class RoomService {
   }
 
   async getRoomsForUser(
-    userId: number,
+    userId: string,
     options: IPaginationOptions,
   ): Promise<Pagination<RoomInterface>> {
     const query = this.roomRepository

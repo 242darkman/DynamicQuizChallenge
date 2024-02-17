@@ -11,8 +11,8 @@ import { UserEntity } from 'src/user/model/user.entity';
 
 @Entity()
 export class JoinedRoomEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   socketId: string;

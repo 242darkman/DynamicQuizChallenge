@@ -14,8 +14,8 @@ import { RoomEntity } from 'src/quiz/model/room/room.entity';
 
 @Entity()
 export class UserEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ unique: true })
   username: string;

@@ -18,7 +18,7 @@ export default function Home() {
         </a>
         <a
           href="/auth/signin"
-          className="w-1/2 px-4 py-2 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor  w-full"
+          className="px-4 py-2 text-mainColor bg-white rounded hover:bg-secondColor focus:ring focus:ring-secondColor  w-full"
         >
           Se connecter
         </a>

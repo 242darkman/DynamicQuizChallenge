@@ -16,13 +16,20 @@ import { DevtoolsModule } from '@nestjs/devtools-integration';
 import { LoggerMiddleware } from 'src/middleware/logger/logger.middleware';
 import OpenAI from 'openai';
 import { QuizModule } from './quiz/quiz.module';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    CacheModule.register({ isGlobal: true }),
+    CacheModule.register({
+      isGlobal: true,
+    }),
+    RedisModule.forRoot({
+      type: 'single',
+      url: 'redis://localhost:6379',
+    }),
     DevtoolsModule.register({
       http: process.env.NODE_ENV !== 'production',
     }),
