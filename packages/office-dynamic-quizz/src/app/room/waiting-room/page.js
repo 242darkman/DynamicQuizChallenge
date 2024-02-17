@@ -2,21 +2,43 @@
 import { useState, useEffect } from 'react';
 import withAuth from "@/app/middleware";
 import { useRoom } from '@/app/_context/RoomContext';
+import { useSocket } from '@/app/_context/SocketContext';
+
 
 function WaitingHome() {
   const [participants, setParticipants] = useState([]);
   const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; // À rendre dynamique
   const { roomSettings, room } = useRoom();
+  const socket = useSocket();
 
   useEffect(() => {
-    console.log('setting est', roomSettings);
-    console.log('room est', room);
     const fetchedParticipants = getNumberOfParticipantsFromLink();
     setParticipants(new Array(fetchedParticipants).fill('Participant')); 
   }, []);
 
+  const startGame = () => {
+    // Commencer le jeu
+    const theme = room.room.settings.theme; 
+    const numberOfQuestions = room.room.settings.numberOfQuestions; 
+    const numberOfRounds    = room.room.settings.numberOfRounds; 
+
+    const gameConfig = {
+      theme: theme,
+      numberOfQuestions: numberOfQuestions,
+      numberOfRounds: numberOfRounds
+    };
+    console.log('params est', gameConfig);
+    socket.emit('generateQuestionWithParams', gameConfig);
+  };
+
   return (
     <main className="min-h-screen p-24 bg-[url('/landscape.svg')] flex items-center justify-center flex-col">
+
+      <button onClick={startGame} className="my-4 bg-green-500 text-white px-4 py-2 rounded">
+        Commencer la partie
+      </button>
+
+
       {participants.length < REQUIRED_NUMBER_OF_PARTICIPANTS ? (
         <div>
           <p>En attente des autres participants...</p>
@@ -25,7 +47,7 @@ function WaitingHome() {
         <div>
           <p>Nombre de participants atteint !</p>
           <button onClick={startGame} className="my-4 bg-green-500 text-white px-4 py-2 rounded">
-            Commencer la partie
+            Ancien
           </button>
         </div>
       )}
@@ -43,9 +65,5 @@ const getNumberOfParticipantsFromLink = () => {
   return Math.floor(Math.random() * 10) + 1;
 };
 
-const startGame = () => {
-  // Commencer le jeu
-  console.log("Début de la partie!");
-};
 
 export default withAuth(WaitingHome);
