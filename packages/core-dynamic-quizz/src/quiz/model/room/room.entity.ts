@@ -5,12 +5,14 @@ import {
   JoinTable,
   ManyToMany,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 import { JoinedRoomEntity } from 'src/quiz/model/joined-room/joined-room.entity';
 import { QuizEntity } from 'src/quiz/model/quiz/quiz.entity';
+import { RoomSettingEntity } from 'src/quiz/model/room/setting/room-setting.entity';
 import { UserEntity } from 'src/user/model/user.entity';
 
 @Entity()
@@ -39,6 +41,11 @@ export class RoomEntity {
 
   @Column({ nullable: true })
   password?: string;
+
+  @OneToOne(() => RoomSettingEntity, (settings) => settings.room, {
+    cascade: true,
+  })
+  settings: RoomSettingEntity;
 
   @CreateDateColumn()
   created_at: Date;

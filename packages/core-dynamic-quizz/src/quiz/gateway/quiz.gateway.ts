@@ -16,9 +16,12 @@ import { ConnectedUserInterface } from 'src/quiz/model/connected-user/connected-
 import { ConnectedUserService } from 'src/quiz/service/connected-user/connected-user.service';
 import { JoinedRoomService } from 'src/quiz/service/joined-room/joined-room.service';
 import { RoomInterface } from 'src/quiz/model/room/room.interface';
+import { RoomSettingInterface } from 'src/quiz/model/room/setting/room-setting.interface';
 import { RoomService } from 'src/quiz/service/room/room.service';
 import { UserInterface } from 'src/user/model/user.interface';
 import { UserService } from 'src/user/service/user-service/user.service';
+import get from 'lodash/get';
+import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
 
 @WebSocketGateway({
   cors: {
@@ -40,10 +43,16 @@ export class QuizGateway
     private authService: AuthService,
     private userService: UserService,
     private roomService: RoomService,
+    private roomSettingService: RoomSettingService,
     private connectedUserService: ConnectedUserService,
     private joinedRoomService: JoinedRoomService,
   ) {}
 
+  /**
+   * Perform cleanup tasks after the initialization of the gateway.
+   *
+   * @return {Promise<void>} Promise that resolves after all cleanup tasks are complete
+   */
   async afterInit() {
     this.logger.debug(`Gateway ${QuizGateway.name} websockets initialized. `);
 
@@ -54,6 +63,13 @@ export class QuizGateway
     await this.joinedRoomService.deleteAll();
   }
 
+  /**
+   * Asynchronously retrieves user data, caches it, and returns the user object.
+   *
+   * @param {type} token - The user's token
+   * @param {type} cacheKey - The key for caching the user data
+   * @return {type} user - The user object
+   */
   async retrieveAndCacheUser(token, cacheKey) {
     const decodedToken = await this.authService.verifyJwt(token);
     const user = await this.userService.getOne(decodedToken.user.id);
@@ -61,6 +77,12 @@ export class QuizGateway
     return user;
   }
 
+  /**
+   * Handle a new client connection.
+   *
+   * @param {Socket} client - The client socket
+   * @return {Promise<void>} A promise that resolves when the handling is complete
+   */
   async handleConnection(client: Socket) {
     this.activeSockets.add(client.id);
     const { sockets } = this.server.sockets;
@@ -68,7 +90,15 @@ export class QuizGateway
     this.logger.debug(`Number of connected clients: ${sockets.size}`);
 
     try {
-      const token = client.handshake.headers.authorization;
+      const authHeader = client.handshake.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (!token) {
+        this.logger.debug('No token provided, customer disconnected.');
+        this.disconnect(client);
+        return;
+      }
+
       const cacheKey = `user:${token}`;
       const cachedUser = await this.redisClient.get(cacheKey);
       const user: UserInterface = cachedUser
@@ -77,11 +107,12 @@ export class QuizGateway
 
       if (!user) {
         this.disconnect(client);
-      } else {
-        client.data.user = user;
-        await this.cacheConnectedUser(client.id, user);
-        this.emitUserRooms(client, user.id);
+        return;
       }
+
+      client.data.user = user;
+      await this.cacheConnectedUser(client.id, user);
+      this.emitUserRooms(client, user);
     } catch (error) {
       this.logger.debug(
         `Disconnecting socket with id: ${client?.id} due to error: ${error.message}`,
@@ -90,6 +121,12 @@ export class QuizGateway
     }
   }
 
+  /**
+   * Handles the disconnection of a client socket.
+   *
+   * @param {Socket} client - the client socket being disconnected
+   * @return {Promise<void>} a promise that resolves once the disconnection process is complete
+   */
   async handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
     if (this.activeSockets.has(client.id)) {
@@ -104,6 +141,12 @@ export class QuizGateway
     }
   }
 
+  /**
+   * Disconnects the given socket.
+   *
+   * @param {Socket} socket - the socket to disconnect
+   * @return {void}
+   */
   private disconnect(socket: Socket) {
     if (!socket) {
       this.logger.error('Socket is undefined, cannot proceed with disconnect.');
@@ -120,49 +163,107 @@ export class QuizGateway
     }
   }
 
+  /**
+   * Function to create a room with given room data and notify connected users.
+   *
+   * @param {Socket} socket - the socket object
+   * @param {{ room: RoomInterface; settings: RoomSettingInterface }} roomData - the room data object
+   * @return {Promise<void>} a promise that resolves when the room is created and users are notified
+   */
   @SubscribeMessage('createRoom')
-  async onCreateRoom(socket: Socket, room: RoomInterface) {
-    const createdRoom: RoomInterface = await this.roomService.createRoom(
-      room,
-      socket.data.user,
-    );
+  async onCreateRoom(
+    client: Socket,
+    roomData: { room: RoomInterface; settings: RoomSettingInterface },
+  ) {
+    const clientId = get(client, 'id');
 
-    for (const user of createdRoom.users) {
-      const connections: ConnectedUserInterface[] =
-        await this.connectedUserService.findByUser(user);
-      const rooms = await this.roomService.getRoomsForUser(user.id, {
-        page: 1,
-        limit: 10,
-      });
-      rooms.meta.currentPage = rooms.meta.currentPage - 1;
-      for (const connection of connections) {
-        await this.server.to(connection.socketId).emit('rooms', rooms);
+    try {
+      const { room, settings } = roomData;
+      const roomCreator = client.data.user;
+
+      if (!room || !settings) {
+        this.server.to(clientId).emit('createRoomResponse', {
+          success: false,
+          message: `Données ou paramètres manquants pour la création du salon.`,
+        });
+        return;
       }
-    }
 
-    this.server.to(socket.id).emit('roomCreated', createdRoom);
+      const createdRoom: RoomInterface =
+        await this.roomService.createRoomWithSettings(
+          room,
+          settings,
+          roomCreator,
+        );
+
+      for (const user of createdRoom.users) {
+        const connections: ConnectedUserInterface[] =
+          await this.connectedUserService.findByUser(user);
+        const rooms = await this.roomService.getRoomsForUser(user.id, {
+          page: 1,
+          limit: 10,
+        });
+        rooms.meta.currentPage = rooms.meta.currentPage - 1;
+        for (const connection of connections) {
+          await this.server.to(connection.socketId).emit('rooms', rooms);
+        }
+      }
+
+      // Gestion de la réponse en cas de succès
+      this.server
+        .to(clientId)
+        .emit('createRoomResponse', { success: true, room: createdRoom });
+    } catch (error) {
+      this.logger.error(`Error when creating room : ${error.message}`);
+      this.server.to(clientId).emit('createRoomResponse', {
+        success: false,
+        message: `Erreur lors de la création de la salle : ${error.message}`,
+      });
+    }
   }
 
+  /**
+   * Handle the event when a user joins a room.
+   *
+   * @param {Socket} socket - The socket object
+   * @param {RoomInterface} room - The room interface
+   * @return {Promise<void>} A promise that resolves when the function completes
+   */
   @SubscribeMessage('joinRoom')
   async onJoinRoom(socket: Socket, room: RoomInterface) {
-    // Sauvegarder la connexion dans le salon
+    // save room connexion
     await this.joinedRoomService.create({
       socketId: socket.id,
       user: socket.data.user,
       room,
     });
-    // Envoi des derniers messages du salon à l'utilisateur
-    await this.server
-      .to(socket.id)
-      .emit('quiz', [{ message: `Welcome to the room ${room.name} !` }]);
+
+    // retrieved room settings
+    const roomSettings = await this.roomSettingService.findByRoomId(room.id);
+
+    // emit settings room to the client
+    await this.server.to(socket.id).emit('roomSettings', roomSettings);
   }
 
+  /**
+   * A description of the entire function.
+   *
+   * @param {Socket} socket - description of parameter
+   * @return {Promise<void>} description of return value
+   */
   @SubscribeMessage('leaveRoom')
   async onLeaveRoom(socket: Socket) {
     // supprime la connexion du salon rejoint
     await this.joinedRoomService.deleteBySocketId(socket.id);
   }
 
+  /**
+   * Cache the connected user with the provided socket ID.
+   *
+   * @param {string} socketId - The ID of the socket
+   * @param {UserInterface} user - The user to be cached
+   * @return {Promise<void>} A Promise that resolves once the user is cached
+   */
   private async cacheConnectedUser(socketId: string, user: UserInterface) {
     const cacheKey = `connectedUsers:${user.id}`;
     const existing = await this.redisClient.get(cacheKey);
@@ -176,7 +277,15 @@ export class QuizGateway
     ); // Expire après 1 heure
   }
 
-  private async emitUserRooms(socket: Socket, userId: string) {
+  /**
+   * Emit rooms to a user's socket after retrieving them from cache or database, and set a cache expiration time.
+   *
+   * @param {Socket} socket - the socket to emit the rooms to
+   * @param {string} userId - the ID of the user
+   * @return {Promise<void>} a promise that resolves when the rooms are emitted
+   */
+  private async emitUserRooms(socket: Socket, user: UserInterface) {
+    const userId = get(user, 'id');
     const cacheKey = `rooms:user:${userId}`;
     const cachedRooms = await this.redisClient.get(cacheKey);
     const rooms = cachedRooms
@@ -184,18 +293,31 @@ export class QuizGateway
       : await this.roomService.getRoomsForUser(userId, { page: 1, limit: 10 });
     await this.redisClient.set(cacheKey, JSON.stringify(rooms), 'EX', 3600); // Expire après 1 heure
     rooms.meta.currentPage = rooms.meta.currentPage - 1;
+    await this.connectedUserService.create({ socketId: socket.id, user });
     this.server.to(socket.id).emit('rooms', rooms);
   }
 
+  /**
+   * Invalidate cached rooms for a specific user.
+   *
+   * @param {string} userId - the ID of the user
+   * @return {Promise<void>} a Promise that resolves once the cached rooms are invalidated
+   */
   private async invalidateCachedRoomsForUser(userId: string) {
     const cacheKey = `rooms:user:${userId}`;
     await this.redisClient.del(cacheKey);
   }
 
+  /**
+   * Invalidates the cache for a user upon disconnection.
+   *
+   * @param {string} userId - the ID of the user to invalidate the cache for
+   * @return {Promise<void>} a promise that resolves when the cache invalidation is complete
+   */
   private async invalidateCacheForUserDisconnect(userId: string) {
     const cacheKey = `connectedUsers:${userId}`;
     await this.redisClient.del(cacheKey);
-    // Invalider également le cache des salles de cet utilisateur
+    // Also disable this user's room cache
     await this.invalidateCachedRoomsForUser(userId);
   }
 }
