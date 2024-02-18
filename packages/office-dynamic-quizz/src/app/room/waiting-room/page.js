@@ -1,18 +1,22 @@
 'use client';
 import { useState, useEffect } from 'react';
 import withAuth from "@/app/middleware";
+import { useRoom } from '@/app/_context/RoomContext';
 
 function WaitingHome() {
   const [participants, setParticipants] = useState([]);
   const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; // À rendre dynamique
+  const { roomSettings, room } = useRoom();
 
   useEffect(() => {
+    console.log('setting est', roomSettings);
+    console.log('room est', room);
     const fetchedParticipants = getNumberOfParticipantsFromLink();
     setParticipants(new Array(fetchedParticipants).fill('Participant')); 
   }, []);
 
   return (
-    <main className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col">
+    <main className="min-h-screen p-24 bg-[url('/landscape.svg')] flex items-center justify-center flex-col">
       {participants.length < REQUIRED_NUMBER_OF_PARTICIPANTS ? (
         <div>
           <p>En attente des autres participants...</p>

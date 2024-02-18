@@ -2,11 +2,13 @@
 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAuth } from '@/app/_context/AuthContext';
 import { useState } from "react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login } = useAuth();
   const router = useRouter();
 
   const validateEmail = (email) => {
@@ -52,12 +54,11 @@ export default function Login() {
       }
 
       const data = await response.json();
-      localStorage.setItem("app_token", data.access_token);
       toast.dismiss(loadingToast);
       toast.success(
         "Bingo ! Connexion réussie. Bienvenue dans votre nouvelle aventure !"
       );
-      router.push('/room');
+      login(data.access_token);
       
     } catch (error) {
       toast.error(

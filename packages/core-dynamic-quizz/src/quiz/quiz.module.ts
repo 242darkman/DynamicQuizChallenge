@@ -10,6 +10,8 @@ import { QuizGateway } from 'src/quiz/gateway/quiz.gateway';
 import { QuizService } from './service/quiz/quiz.service';
 import { RoomEntity } from 'src/quiz/model/room/room.entity';
 import { RoomService } from './service/room/room.service';
+import { RoomSettingEntity } from 'src/quiz/model/room/setting/room-setting.entity';
+import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'src/user/user.module';
 
@@ -21,6 +23,7 @@ import { UserModule } from 'src/user/user.module';
       QuestionEntity,
       QuizEntity,
       RoomEntity,
+      RoomSettingEntity,
       JoinedRoomEntity,
       ConnectedUserEntity,
     ]),
@@ -31,6 +34,7 @@ import { UserModule } from 'src/user/user.module';
     ConnectedUserService,
     JoinedRoomService,
     QuizService,
+    RoomSettingService,
   ],
 })
 export class QuizModule {}
