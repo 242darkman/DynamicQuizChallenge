@@ -4,26 +4,28 @@ import withAuth from "@/app/middleware";
 import { useRoom } from '@/app/_context/RoomContext';
 import { useSocket } from '@/app/_context/SocketContext';
 import { useRouter } from "next/navigation";
-
+import { Spin } from 'antd'; 
+import { toast } from "sonner";
 
 
 function WaitingHome() {
   const [participants, setParticipants] = useState([]);
-  const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; // À rendre dynamique
+  const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; 
   const { roomSettings, room, storeServerResponse } = useRoom();
-  const socket = useSocket();``
+  const socket = useSocket();
   const router = useRouter();
+  const [spinning, setSpinning] = useState(false);
 
   useEffect(() => {
     const fetchedParticipants = getNumberOfParticipantsFromLink();
     setParticipants(new Array(fetchedParticipants).fill('Participant')); 
   }, []);
 
-  /**
-   * Gérer le clique pour débuter le quizz
-   */
+  
+  //Gérer le clique pour débuter le quizz
   const startGame = () => {
-    console.log('le room est', room);
+    setSpinning(true);
+    const toastLoading = toast.loading("Juste un instant, nous préparons les questions");
     const gameConfig = {
       theme: room.room.settings.theme,
       numberOfQuestions: room.room.settings.numberOfQuestions,
@@ -32,9 +34,15 @@ function WaitingHome() {
     socket.emit('generateQuestionWithParams', gameConfig);
 
     // Ecouter la réponse du serveur
-    socket.on('response', (response) => {
-      storeServerResponse(response);
-      router.push('/room/question');
+    socket.on('response', (responses) => {
+      storeServerResponse(responses);
+
+      // Vérifiez si la réponse a été reçue avant de rediriger
+      if (responses) {
+        toast.dismiss(toastLoading);
+        setSpinning(false);
+        router.push('/room/question');
+      }
     });
   };
 
@@ -64,7 +72,9 @@ function WaitingHome() {
           <p key={index}>{participant} </p>
         ))}
       </div>
+      <Spin spinning={spinning} fullscreen />
     </main>
+    
   );
 }
 

@@ -233,47 +233,10 @@ export class QuizGateway
   @SubscribeMessage('generateQuestionWithParams')
   async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
     const { theme, numberOfQuestions, level } = gameConfig;
-    console.log('le data est ', gameConfig);
 
     try{
-      //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      const table = [ 
-        {
-          "theme": "sport",
-          "question": "What is the primary objective in the sport of basketball?",
-          "correct_answer": "To score more points than the opposing team",
-          "incorrect_answers": [
-            "To hit a home run",
-            "To kick a field goal",
-            "To win the most rounds"
-          ]
-        },
-        {
-          "theme": "sport",
-          "question": "What sport is known as \"The Beautiful Game\"?",
-          "correct_answer": "Soccer",
-          "incorrect_answers": [
-            "Basketball",
-            "Tennis",
-            "Golf"
-          ]
-        },
-        {
-          "theme": "sport",
-          "question": "What is the term for the illegal move in soccer where a player uses their hand or arm to control the ball?",
-          "correct_answer": "Handball",
-          "incorrect_answers": [
-            "Offside",
-            "Dribble",
-            "Penalty kick"
-          ]
-        }
-      ]; 
-
-      //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      const response = table;
+      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
       client.emit('response', response);
-      //console.log('la réponse du seveur ', response);
       this.logger.debug(`la réponse du serveur :` , response);
       
     }catch (error) {

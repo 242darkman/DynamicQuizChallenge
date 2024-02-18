@@ -91,6 +91,4 @@ export class OpenAIService {
       throw new Error(`Error generating hint: ${error}`);
     }
   }
-
-  
 }
