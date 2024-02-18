@@ -5,39 +5,47 @@ import { useState, useEffect } from "react";
 import { useRoom } from '@/app/_context/RoomContext';
 import withAuth from "@/app/middleware";
 
+
 function Question() {
   const router = useRouter();
-  const { clearRoomData } = useRoom();
+  const { clearRoomData, serverResponse } = useRoom();
+  const [timer, setTimer] = useState(15);
+  const [username, setUser] = useState(null);
 
   useEffect(() => {
     clearRoomData();
-  })
+    
+    const token = localStorage.getItem('app_token');
+    if (token) {
+      const payloadBase64 = token.split('.')[1];
+      const payloadJson = atob(payloadBase64);
+      const payload = JSON.parse(payloadJson);
+      setUser(payload.user.username);
+    }
+
+    console.log('la reponse est ici ', serverResponse);
+
+    if (timer > 0) {
+      const countdownInterval = setInterval(() => {
+        setTimer(prevTime => prevTime - 1);
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    }
+  }, [timer]);
 
   return (
     <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
-      <div className="flex justify-between p-10">
-        <p className="text-m text-white">Votre pseudo</p>
-        <div className="text-m">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="white"
-            className="w-12 h-12"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
-          <p className="text-m text-white">15:20</p>
+     <div className="flex justify-between font-bold text-3xl pt-10 pb-20 ml-20 mr-20">
+        {username && (
+          <p className="text-m text-white">
+            <span>Pseudo:</span> {username}
+          </p>
+        )}
+        <div>
+            <span>Chrono :</span> {timer}
         </div>
       </div>
-      <h1 className="font-bold text-3xl pt-10 pb-20 flex flex-col items-center justify-center text-white ">
-        Quelle est la planète la plus petite du système solaire ?
-      </h1>
 
       <div className="grid grid-cols-2 gap-14 max-w-screen-lg mx-auto">
         <button className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor">

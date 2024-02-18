@@ -225,15 +225,22 @@ export class QuizGateway
   }
 
 
-  // Générer les questions
+  /**
+   * Méthode pour générer les questions
+   * @param client 
+   * @param gameConfig 
+   */
   @SubscribeMessage('generateQuestionWithParams')
   async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
     const { theme, numberOfQuestions, level } = gameConfig;
     console.log('le data est ', gameConfig);
 
     try{
-      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      console.log('la reponse est ', response);
+      //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
+      const response = 'la clé ne marche plus'
+
+      // envoyer la réponse : 
+      client.emit('response', response);
       
     }catch (error) {
       this.logger.error(
@@ -241,16 +248,8 @@ export class QuizGateway
       );
     }
   }
-  /*
-  async onGenerateQuestionWithParams(
-    gameConfig: { theme: string; numberOfQuestions: number; numberOfRounds: number }
-  ) {
-    const { theme, numberOfQuestions, numberOfRounds } = gameConfig;
-    console.log('le data est ', gameConfig);
-  }
-  */
 
-  
+
   /**
    * Handle the event when a user joins a room.
    *

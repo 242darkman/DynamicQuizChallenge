@@ -3,36 +3,43 @@ import { useState, useEffect } from 'react';
 import withAuth from "@/app/middleware";
 import { useRoom } from '@/app/_context/RoomContext';
 import { useSocket } from '@/app/_context/SocketContext';
+import { useRouter } from "next/navigation";
+
 
 
 function WaitingHome() {
   const [participants, setParticipants] = useState([]);
   const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; // À rendre dynamique
-  const { roomSettings, room } = useRoom();
-  const socket = useSocket();
+  const { roomSettings, room, storeServerResponse } = useRoom();
+  const socket = useSocket();``
+  const router = useRouter();
 
   useEffect(() => {
     const fetchedParticipants = getNumberOfParticipantsFromLink();
     setParticipants(new Array(fetchedParticipants).fill('Participant')); 
   }, []);
 
+  /**
+   * Gérer le clique pour débuter le quizz
+   */
   const startGame = () => {
-    // Commencer le jeu
-    const theme = room.room.settings.theme; 
-    const numberOfQuestions = room.room.settings.numberOfQuestions; 
-    const numberOfRounds    = room.room.settings.numberOfRounds; 
-
+    
     const gameConfig = {
-      theme: theme,
-      numberOfQuestions: numberOfQuestions,
-      numberOfRounds: numberOfRounds
+      theme: room.room.settings.theme,
+      numberOfQuestions: room.room.settings.numberOfQuestions,
+      numberOfRounds: room.room.settings.numberOfRounds
     };
-    console.log('params est', gameConfig);
     socket.emit('generateQuestionWithParams', gameConfig);
+
+    // Ecouter la réponse du serveur
+    socket.on('response', (response) => {
+      storeServerResponse(response);
+      router.push('/room/question');
+    });
   };
 
-  return (
-    <main className="min-h-screen p-24 bg-[url('/landscape.svg')] flex items-center justify-center flex-col">
+  return (    
+    <main className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col bg-[url('/landscape.svg')] bg-cover bg-center">
 
       <button onClick={startGame} className="my-4 bg-green-500 text-white px-4 py-2 rounded">
         Commencer la partie
