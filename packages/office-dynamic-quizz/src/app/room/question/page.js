@@ -12,6 +12,10 @@ function Question() {
   const [timer, setTimer] = useState(15);
   const [username, setUser] = useState(null);
 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // Ajout de l'état pour suivre l'index de la question actuelle
+  const [questions, setQuestions] = useState([]); // Ajout de l'état pour stocker les questions
+  const [userAnswers, setUserAnswers] = useState([]); // Ajout de l'état pour stocker les réponses de l'utilisateur
+
   useEffect(() => {
     clearRoomData();
     
@@ -23,8 +27,6 @@ function Question() {
       setUser(payload.user.username);
     }
 
-    console.log('la reponse est ici ', serverResponse);
-
     if (timer > 0) {
       const countdownInterval = setInterval(() => {
         setTimer(prevTime => prevTime - 1);
@@ -34,33 +36,79 @@ function Question() {
     }
   }, [timer]);
 
+  // Initialisation des questions avec la réponse du serveur
+  useEffect(() => {
+    if (serverResponse && serverResponse.length >  0) {
+      setQuestions(serverResponse);
+    }
+  }, [serverResponse]); // Ajout de serverResponse comme dépendance
+
+  // Fonction pour passer à la question suivante
+  const nextQuestion = () => {
+    if (currentQuestionIndex < questions.length -  1) {
+      setCurrentQuestionIndex(currentQuestionIndex +  1);
+    } else {
+      console.log('la fin du jeu');
+    }
+  };
+
+  // Fonction pour enregistrer la réponse de l'utilisateur et passer à la question suivante
+  const handleAnswer = (isCorrect) => {
+    const answer = {
+      questionIndex: currentQuestionIndex,
+      isCorrect: isCorrect,
+    };
+    setUserAnswers([...userAnswers, answer]);
+    nextQuestion();
+  };
+
+  // Récupérer la question actuelle
+  const currentQuestion = questions[currentQuestionIndex];
+
+
+
+
   return (
     <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
-     <div className="flex justify-between font-bold text-3xl pt-10 pb-20 ml-20 mr-20">
-        {username && (
-          <p className="text-m text-white">
-            <span>Pseudo:</span> {username}
-          </p>
-        )}
-        <div>
-            <span>Chrono :</span> {timer}
-        </div>
+      <div className="flex justify-between font-bold text-3xl pt-10 pb-20 ml-20 mr-20">
+          {username && (
+            <p className="text-m text-white">
+              <span>Pseudo:</span> {username}
+            </p>
+          )}
+          <div>
+              <span>Chrono :</span> {timer}
+          </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-14 max-w-screen-lg mx-auto">
-        <button className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor">
-          Mercure
-        </button>
-        <button className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor">
-          Vénus
-        </button>
-        <button className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor">
-          Mars
-        </button>
-        <button className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor">
-          Jupiter
-        </button>
+      <div className="question-container">
+        {currentQuestion && (
+          <div className="question-wrapper mx-auto text-center mt-8 mb-8">
+            <h2 className="text-2xl font-bold mb-20">{currentQuestion.question}</h2>
+            <div className="grid grid-cols-2 gap-4 max-w-screen-lg mx-auto h-60">
+              {currentQuestion.incorrect_answers.map((answer, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswer(false)}
+                  className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor"
+                >
+                  {answer}
+                </button>
+              ))}
+              <button
+                onClick={() => handleAnswer(true)}
+                className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor"
+              >
+                {currentQuestion.correct_answer}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+
+
+
     </div>
   );
 }

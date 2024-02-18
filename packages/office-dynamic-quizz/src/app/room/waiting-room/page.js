@@ -23,7 +23,7 @@ function WaitingHome() {
    * Gérer le clique pour débuter le quizz
    */
   const startGame = () => {
-    
+    console.log('le room est', room);
     const gameConfig = {
       theme: room.room.settings.theme,
       numberOfQuestions: room.room.settings.numberOfQuestions,
@@ -61,7 +61,7 @@ function WaitingHome() {
 
       <div>
         {participants.map((participant, index) => (
-          <p key={index}>{participant}</p>
+          <p key={index}>{participant} </p>
         ))}
       </div>
     </main>

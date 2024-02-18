@@ -21,7 +21,7 @@ import { UserInterface } from 'src/user/model/user.interface';
 import { UserService } from 'src/user/service/user-service/user.service';
 import get from 'lodash/get';
 import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
-import { log } from 'console';
+import { log, table } from 'console';
 import {OpenAIService} from 'src/quiz/service/openai/openai.service'
 
 @WebSocketGateway({
@@ -237,10 +237,44 @@ export class QuizGateway
 
     try{
       //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      const response = 'la clé ne marche plus'
+      const table = [ 
+        {
+          "theme": "sport",
+          "question": "What is the primary objective in the sport of basketball?",
+          "correct_answer": "To score more points than the opposing team",
+          "incorrect_answers": [
+            "To hit a home run",
+            "To kick a field goal",
+            "To win the most rounds"
+          ]
+        },
+        {
+          "theme": "sport",
+          "question": "What sport is known as \"The Beautiful Game\"?",
+          "correct_answer": "Soccer",
+          "incorrect_answers": [
+            "Basketball",
+            "Tennis",
+            "Golf"
+          ]
+        },
+        {
+          "theme": "sport",
+          "question": "What is the term for the illegal move in soccer where a player uses their hand or arm to control the ball?",
+          "correct_answer": "Handball",
+          "incorrect_answers": [
+            "Offside",
+            "Dribble",
+            "Penalty kick"
+          ]
+        }
+      ]; 
 
-      // envoyer la réponse : 
+      //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
+      const response = table;
       client.emit('response', response);
+      //console.log('la réponse du seveur ', response);
+      this.logger.debug(`la réponse du serveur :` , response);
       
     }catch (error) {
       this.logger.error(
