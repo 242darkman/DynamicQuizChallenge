@@ -1,0 +1,71 @@
+# Monorepo CI/CD Workflow
+# Ce workflow gère l'intégration continue et la livraison continue pour notre projet monorepo contenant à la fois un frontend et un backend.
+
+name: Monorepo CI/CD Pipeline
+
+# Déclencheurs du workflow: sur les pull requests pour toutes les branches et sur les pushs pour la branche main et tous les tags.
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+
+# Jobs à exécuter
+jobs:
+  # Job pour le linting et la construction
+  lint-and-build:
+    runs-on: ubuntu-latest # Exécute le job sur la dernière version d'Ubuntu
+    strategy:
+      matrix:
+        node-version: [18.x] # Définit les versions de Node.js à utiliser
+        include:
+          - project-path: packages/core-dynamic-quizz # Chemin vers le backend
+            build-script: build
+          - project-path: packages/office-dynamic-quizz # Chemin vers le frontend
+            build-script: build
+    steps:
+      - uses: actions/checkout@v2 # Checkout du code
+        with:
+          fetch-depth: 0 # Récupère tous les commits
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2 # Installe Node.js
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Dependencies
+        run: npm install # Installe les dépendances
+        working-directory: ${{ matrix.project-path }}
+
+      - name: Run Lint
+        run: npm run lint # Exécute le lint
+        working-directory: ${{ matrix.project-path }}
+
+      - name: Build
+        run: npm run ${{ matrix.build-script }} # Construit le projet
+        working-directory: ${{ matrix.project-path }}
+
+  # Job pour les tests backend
+  backend-test:
+    runs-on: ubuntu-latest
+    needs: lint-and-build # Dépend du succès de lint-and-build
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main'))
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.x
+
+      - name: Install Dependencies (Backend)
+        run: npm install # Installe les dépendances du backend
+        working-directory: packages/core-dynamic-quizz
+
+      - name: Test (Backend)
+        run: npm test # Exécute les tests backend
+        working-directory: packages/core-dynamic-quizz
