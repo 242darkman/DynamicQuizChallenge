@@ -69,3 +69,30 @@ jobs:
       - name: Test (Backend)
         run: npm test # Exécute les tests backend
         working-directory: packages/core-dynamic-quizz
+
+  # Job pour la construction et le déploiement de Docker
+  docker-and-deploy:
+    runs-on: ubuntu-latest
+    needs: backend-test # Dépend du succès de backend-test
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'push' && github.ref_type == 'tag')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1 # Se connecte à Docker Hub
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image (Dynamic Quiz)
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            TAG="latest"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          docker build -t 242darkman/dynamic_quiz_challenge:$TAG -f packages/core-dynamic-quizz/Dockerfile .
+          docker push 242darkman/dynamic_quiz_challenge:$TAG # Construit et pousse l'image Docker
