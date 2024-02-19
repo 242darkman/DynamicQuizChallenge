@@ -18,9 +18,12 @@ export default function Signup() {
       `http://localhost:5000/api/users/check-username?username=${username}`, {
         method: "GET",
         headers: {
-          'Content-Type': "application/json",
-          'Access-Control-Allow-Origin': "http://localhost:5000",
-        }
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': 'http://localhost:5000',
+          'Access-Control-Allow-Credentials': 'true'
+        },
+        mode: 'same-origin',
+        credentials: 'include'
       }
     );
     const data = await response.json();
