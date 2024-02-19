@@ -15,7 +15,9 @@ export default function Signup() {
 
   const checkUsername = async (username) => {
     const response = await fetch(
-      `http://localhost:5000/api/users/check-username?username=${username}`
+      `http://localhost:5000/api/users/check-username?username=${username}`, {
+        method: "GET",
+      }
     );
     const data = await response.json();
     setUsernameAvailable(!data.exists);
