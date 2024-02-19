@@ -14,6 +14,7 @@ import { RoomSettingEntity } from 'src/quiz/model/room/setting/room-setting.enti
 import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'src/user/user.module';
+import { OpenAIService } from '../quiz/service/openai/openai.service';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UserModule } from 'src/user/user.module';
     JoinedRoomService,
     QuizService,
     RoomSettingService,
+    OpenAIService
   ],
 })
 export class QuizModule {}

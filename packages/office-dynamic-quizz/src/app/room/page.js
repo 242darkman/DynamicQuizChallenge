@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useSocket } from '@/app/_context/SocketContext';
 import withAuth from "@/app/middleware";
 import { root } from "postcss";
+import Layout from "./../page";
 
 function Room() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,6 +26,7 @@ function Room() {
     if (!socket) return;
 
     const handleJoinRoom = (room) => {
+      storeRoomSettings(room.settings);
       toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence bientôt !`);
     };
 
@@ -94,7 +96,8 @@ function Room() {
   };
 
   return (
-    <div className="min-h-screen p-24 bg-[url('/landscape.svg')] flex items-center justify-center flex-col">
+    
+    <div className="min-h-screen p-24 bg-mainColor flex items-center justify-center flex-col bg-[url('/landscape.svg')] bg-cover bg-center">
       <div>
         <h1 className="text-5xl">Que souhaitez-vous faire ?</h1>
       </div>

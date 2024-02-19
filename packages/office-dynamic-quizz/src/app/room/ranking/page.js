@@ -3,9 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import withAuth from "@/app/middleware";
+import { useRoom } from '@/app/_context/RoomContext';
+
 
 function Ranking() {
   const router = useRouter();
+  const { score} = useRoom();
+
+  console.log(' le score est ',  score);
 
   return (
     <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
@@ -94,26 +99,6 @@ function Ranking() {
                 </th>
                 <td className="px-6 py-4">Silver</td>
                 <td className="px-6 py-4">563</td>
-              </tr>
-              <tr className="bg-white border-b">
-                <th
-                  scope="row"
-                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap "
-                >
-                  2
-                </th>
-                <td className="px-6 py-4">John</td>
-                <td className="px-6 py-4">459</td>
-              </tr>
-              <tr className="bg-white ">
-                <th
-                  scope="row"
-                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"
-                >
-                  3
-                </th>
-                <td className="px-6 py-4">Magic</td>
-                <td className="px-6 py-4">356</td>
               </tr>
             </tbody>
           </table>

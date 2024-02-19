@@ -30,8 +30,8 @@ function RoomSettings() {
 
       socket.on('createRoomResponse', (response) => {
         if (response.success) {
-          toast.success(`Salle "${roomData.name}" créée avec succès. Préparation du salon...`);
-          router.push("/room/question");
+          toast.success(`Salle "${roomData.name}" créée avec succès. veuillez rejoindre le salon...`);
+          router.push("/room");
           return;
         } 
         

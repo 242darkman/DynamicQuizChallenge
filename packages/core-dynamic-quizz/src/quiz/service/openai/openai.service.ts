@@ -1,21 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import OpenAI from 'openai';
+import OpenAI from 'openai'; 
 
 @Injectable()
 export class OpenAIService {
-  constructor(private readonly openai: OpenAI) {}
+  private readonly openai: OpenAI;
+
+  constructor() {
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY is not set.');
+    }
+
+    this.openai = new OpenAI({ apiKey: openaiApiKey });
+  }
 
   async generateQuestions(
-    subject: string,
-    difficulty: string,
+    theme: string,
+    level: string,
     numberOfQuestions: number,
   ): Promise<any[]> {
+    
     try {
       const questionsArray = [];
 
       while (questionsArray.length < numberOfQuestions) {
-        const prompt = `Generate a multiple-choice question about ${subject} at ${difficulty} level. Include one correct answer and three incorrect answers. Format the question as follows:\n- Question: [The question here]\n- Correct answer: [The correct answer here]\n- Incorrect answers: [Three incorrect answers here]`;
-
+        const prompt = `Generate a multiple-choice question about ${theme} at ${level} level. Include one correct answer and three incorrect answers. Format the question as follows:\n- Question: [The question here]\n- Correct answer: [The correct answer here]\n- Incorrect answers: [Three incorrect answers here]`;
         const response = await this.openai.chat.completions.create({
           model: 'gpt-3.5-turbo',
           messages: [
@@ -40,8 +50,7 @@ export class OpenAIService {
 
           // Construisez l'objet question ici
           const questionObj = {
-            difficulty,
-            subject,
+            theme,
             question,
             correct_answer: correctAnswer,
             incorrect_answers: incorrectAnswers,
@@ -58,7 +67,11 @@ export class OpenAIService {
     } catch (error) {
       throw new Error(`Error generating questions: ${error}`);
     }
+    
+
+    return;
   }
+
 
   async generateHint(question: string): Promise<string> {
     try {
