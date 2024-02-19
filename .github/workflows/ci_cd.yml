@@ -1,0 +1,127 @@
+# Monorepo CI/CD Workflow
+# Ce workflow gère l'intégration continue et la livraison continue pour notre projet monorepo contenant à la fois un frontend et un backend.
+
+name: Monorepo CI/CD Pipeline
+
+# Déclencheurs du workflow: sur les pull requests pour toutes les branches et sur les pushs pour la branche main et tous les tags.
+on:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+
+# Jobs à exécuter
+jobs:
+  # Job pour le linting et la construction
+  lint-and-build:
+    runs-on: ubuntu-latest # Exécute le job sur la dernière version d'Ubuntu
+    strategy:
+      matrix:
+        node-version: [18.x] # Définit les versions de Node.js à utiliser
+        include:
+          - project-path: packages/core-dynamic-quizz # Chemin vers le backend
+            build-script: build
+          - project-path: packages/office-dynamic-quizz # Chemin vers le frontend
+            build-script: build
+    steps:
+      - uses: actions/checkout@v2 # Checkout du code
+        with:
+          fetch-depth: 0 # Récupère tous les commits
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2 # Installe Node.js
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install Dependencies
+        run: npm install # Installe les dépendances
+        working-directory: ${{ matrix.project-path }}
+
+      - name: Run Lint
+        run: npm run lint # Exécute le lint
+        working-directory: ${{ matrix.project-path }}
+
+      - name: Build
+        run: npm run ${{ matrix.build-script }} # Construit le projet
+        working-directory: ${{ matrix.project-path }}
+
+  # Job pour les tests backend
+  backend-test:
+    runs-on: ubuntu-latest
+    needs: lint-and-build # Dépend du succès de lint-and-build
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main'))
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18.x
+
+      - name: Install Dependencies (Backend)
+        run: npm install # Installe les dépendances du backend
+        working-directory: packages/core-dynamic-quizz
+
+      - name: Test (Backend)
+        run: npm test # Exécute les tests backend
+        working-directory: packages/core-dynamic-quizz
+
+  # Job pour la construction et le déploiement de Docker
+  docker-and-deploy:
+    runs-on: ubuntu-latest
+    needs: backend-test # Dépend du succès de backend-test
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'push' && github.ref_type == 'tag')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Docker
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1 # Se connecte à Docker Hub
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image (Dynamic Quiz)
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            TAG="latest"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          docker build -t 242darkman/dynamic_quiz_challenge:$TAG -f packages/core-dynamic-quizz/Dockerfile .
+          docker push 242darkman/dynamic_quiz_challenge:$TAG # Construit et pousse l'image Docker
+
+  # Job pour générer les notes de release
+  generate-release-notes:
+    runs-on: ubuntu-latest
+    needs: [lint-and-build, backend-test, docker-and-deploy] # Dépend du succès des jobs précédents
+    if: github.event_name == 'push' && github.ref_type == 'tag' # S'exécute seulement pour les tags
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Récupère tous les commits
+
+      - name: Generate Release Notes
+        uses: release-drafter/release-drafter@v5 # Génère les notes de release
+        with:
+          config-name: .github/release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_GITHUB_TOKEN }} # Utilise le token GitHub pour l'authentification
+
+
+  update-changelog:
+    runs-on: ubuntu-latest
+    needs: generate-release-notes # Ce job s'exécute après la génération des notes de release
+    if: github.event_name == 'push' && github.ref_type == 'tag' # Condition pour s'exécuter uniquement pour les tags
+    steps:
+      - name: Changelog Update 📄
+        uses: bcsizmadia/changelog_update@main
+        with:
+          token: ${{ secrets.ACCESS_GITHUB_TOKEN }}
+          commit_message: "🎉 Update changelog for new release"

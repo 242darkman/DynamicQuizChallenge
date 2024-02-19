@@ -1,0 +1,12 @@
+# Configuration pour Release Drafter
+# Release Drafter automatise la génération de notes de release à chaque push de tag ou merge dans la branche principale.
+
+# Définition du modèle (template) des notes de release
+template: |
+  ## What’s Changed
+  # Cette section affiche un titre pour la liste des changements.
+  
+  $CHANGES
+  # $CHANGES est une variable spéciale utilisée par Release Drafter.
+  # Elle sera remplacée par une liste générée automatiquement des changements depuis la dernière release.
+  # Cela inclut les commits, les pull requests fusionnés, et autres changements significatifs.
