@@ -12,6 +12,7 @@ export const RoomProvider = ({ children }) => {
   const [room, setRooms] = useState(null);
   const [roomUsers, setRoomUsers] = useState([]);
   const [serverResponse, setServerResponse] = useState(null); 
+  const [score, setScore] = useState(null); 
 
   const storeRoomData = (data) => {
     setRoomData(data);
@@ -29,6 +30,10 @@ export const RoomProvider = ({ children }) => {
     setServerResponse(response); 
   };
 
+  const storeScore = (score) => {
+    setScore(score); 
+  };
+
   const clearRoomData = () => {
     setRoomData(null);
     setRoomSettings(null);
@@ -36,7 +41,7 @@ export const RoomProvider = ({ children }) => {
 
   return (
     <RoomContext.Provider value={{ roomData, roomSettings, storeRoomData, storeRoomSettings, 
-      clearRoomData, room, setRooms, roomUsers, storeRoomUsers, serverResponse, storeServerResponse, }}>
+      clearRoomData, room, setRooms, roomUsers, storeRoomUsers, serverResponse, storeServerResponse, score, storeScore}}>
       {children}
     </RoomContext.Provider>
   );
