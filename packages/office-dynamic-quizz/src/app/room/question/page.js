@@ -9,6 +9,16 @@ import { Progress } from 'antd';
 import { toast } from "sonner";
 
 
+//Fonction pour mélanger les questions
+function shuffleArray(array) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
 function Question() {
   const router = useRouter();
   const { clearRoomData, serverResponse, room , storeServerResponse} = useRoom();
@@ -19,19 +29,20 @@ function Question() {
   const [questions, setQuestions] = useState([]); 
   const [userAnswers, setUserAnswers] = useState([]);
   const [totalScore, setTotalScore] = useState(0);
-
+  const [roomData, setRoomData] = useState(room.room.settings);
   const [round, setRound] = useState(1);
-  const [totalRounds, setTotalRounds] = useState(room.room.settings.numberOfRounds);
+  const [totalRounds, setTotalRounds] = useState(roomData.numberOfRounds);
   const [roundsCompleted, setRoundsCompleted] = useState(0);
 
   const newGame = (() => {
 
     resetGameState();
     const toastLoading = toast.loading("Juste un instant, nous préparons les questions");
+
     const gameConfig = {
-      theme: room.room.settings.theme,
-      numberOfQuestions: room.room.settings.numberOfQuestions,
-      numberOfRounds: room.room.settings.numberOfRounds
+      theme: roomData.theme,
+      numberOfQuestions: roomData.numberOfQuestions,
+      numberOfRounds: roomData.numberOfRounds
     };
     socket.emit('generateQuestionWithParams', gameConfig);
     socket.on('response', (response) => {
@@ -74,7 +85,10 @@ function Question() {
   // Initialisation des questions avec la réponse du serveur
   useEffect(() => {
     if (serverResponse && serverResponse.length >  0) {
-      setQuestions(serverResponse);
+      setQuestions(serverResponse.map((question) => ({
+        ...question,
+        answers: shuffleArray([...question.incorrect_answers, question.correct_answer])
+    })));
     }
   }, [serverResponse]);
 
@@ -174,21 +188,15 @@ function Question() {
               Question {currentQuestionIndex +  1} : {currentQuestion.question}
             </h2>
             <div className="grid grid-cols-2 gap-4 max-w-screen-lg mx-auto h-60">
-              {currentQuestion.incorrect_answers.map((answer, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(false)}
-                  className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor rounded-lg"
-                >
-                  {answer}
-                </button>
-              ))}
-              <button
-                onClick={() => handleAnswer(true)}
-                className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor rounded-lg"
-              >
-                {currentQuestion.correct_answer}
-              </button>
+            {currentQuestion.answers.map((answer, index) => (
+        <button
+            key={index}
+            onClick={() => handleAnswer(answer === currentQuestion.correct_answer)}
+            className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor rounded-lg"
+        >
+            {answer}
+        </button>
+    ))}
             </div>
           </div>
         )}
