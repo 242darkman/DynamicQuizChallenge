@@ -15,15 +15,8 @@ export default function Signup() {
 
   const checkUsername = async (username) => {
     const response = await fetch(
-      `http://localhost:5000/api/users/check-username?username=${username}`, {
+      `http://127.0.0.1:5000/api/users/check-username?username=${username}`, {
         method: "GET",
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': 'http://localhost:5000',
-          'Access-Control-Allow-Credentials': 'true'
-        },
-        mode: 'same-origin',
-        credentials: 'include'
       }
     );
     const data = await response.json();
@@ -32,7 +25,7 @@ export default function Signup() {
 
   const checkEmail = async (email) => {
     const response = await fetch(
-      `http://localhost:5000/api/users/check-email?email=${email}`
+      `http://127.0.0.1:5000/api/users/check-email?email=${email}`
     );
     const data = await response.json();
     setEmailAvailable(!data.exists);
@@ -52,7 +45,7 @@ export default function Signup() {
     );
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/create", {
+      const response = await fetch("http://127.0.0.1:5000/api/users/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
