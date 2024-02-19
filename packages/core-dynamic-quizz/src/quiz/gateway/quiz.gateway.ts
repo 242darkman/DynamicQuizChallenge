@@ -241,7 +241,7 @@ export class QuizGateway
       
     }catch (error) {
       this.logger.error(
-        `Erreur lors de la tentative des reponses : ${error.message}`,
+        `Erreur lors de la tentative récupération des questions : ${error.message}`,
       );
     }
   }

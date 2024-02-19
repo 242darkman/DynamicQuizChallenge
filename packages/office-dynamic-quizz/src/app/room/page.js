@@ -26,6 +26,7 @@ function Room() {
     if (!socket) return;
 
     const handleJoinRoom = (room) => {
+      storeRoomSettings(room.settings);
       toast.success(`Bienvenue dans le salon "${room.name}" ! Attachez votre ceinture, l'aventure commence bientôt !`);
     };
 

@@ -1,14 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRoom } from '@/app/_context/RoomContext';
 import withAuth from "@/app/middleware";
+import { useSocket } from '@/app/_context/SocketContext';
 import { Progress } from 'antd';
+import { toast } from "sonner";
+
 
 function Question() {
   const router = useRouter();
-  const { clearRoomData, serverResponse } = useRoom();
+  const { clearRoomData, serverResponse, room , storeServerResponse} = useRoom();
+  const socket = useSocket();
   const [timer, setTimer] = useState(20);
   const [username, setUser] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
@@ -16,9 +20,36 @@ function Question() {
   const [userAnswers, setUserAnswers] = useState([]);
   const [totalScore, setTotalScore] = useState(0);
 
+  const [round, setRound] = useState(1);
+  const [totalRounds, setTotalRounds] = useState(room.room.settings.numberOfRounds);
+  const [roundsCompleted, setRoundsCompleted] = useState(0);
+
+  const newGame = (() => {
+
+    resetGameState();
+    const toastLoading = toast.loading("Juste un instant, nous préparons les questions");
+    const gameConfig = {
+      theme: room.room.settings.theme,
+      numberOfQuestions: room.room.settings.numberOfQuestions,
+      numberOfRounds: room.room.settings.numberOfRounds
+    };
+    socket.emit('generateQuestionWithParams', gameConfig);
+    socket.on('response', (response) => {
+      storeServerResponse(response);
+
+      if (response) {
+        toast.dismiss(toastLoading);
+      }
+    });
+  });
+
   useEffect(() => {
-    clearRoomData();
-    
+    newGame()
+  }, [socket]);
+
+  useEffect(() => {
+    //clearRoomData();
+
     const token = localStorage.getItem('app_token');
     if (token) {
       const payloadBase64 = token.split('.')[1];
@@ -27,17 +58,18 @@ function Question() {
       setUser(payload.user.username);
     }
 
-    if (timer > 0) {
-      const countdownInterval = setInterval(() => {
-        setTimer(prevTime => prevTime - 1);
-      }, 1000);
+    if (questions.length > 0) {
+      if (timer > 0) {
+        const countdownInterval = setInterval(() => {
+          setTimer(prevTime => prevTime - 1);
+        }, 1000);
 
-      return () => clearInterval(countdownInterval);
+        return () => clearInterval(countdownInterval);
+      } else {
+        nextQuestion();
+      }
     }
-    else{
-      nextQuestion();
-    }
-  }, [timer]);
+  }, [timer, questions]);
 
   // Initialisation des questions avec la réponse du serveur
   useEffect(() => {
@@ -46,16 +78,15 @@ function Question() {
     }
   }, [serverResponse]);
 
-  // Fonction pour passer à la question suivante
-  const nextQuestion = () => {
-    if (currentQuestionIndex < questions.length -  1) {
-      setCurrentQuestionIndex(currentQuestionIndex +  1);
+  const nextQuestion = useCallback(() => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
       setTimer(20);
-    } else {
-      console.log('la fin du jeu');
-      setTimer(0);
+    } else{
+      nextRound();
     }
-  };
+  }, [currentQuestionIndex, questions, userAnswers]);
+  
 
   // Fonction pour enregistrer la réponse de l'utilisateur et passer à la question suivante
   const handleAnswer = (isCorrect) => {
@@ -70,8 +101,40 @@ function Question() {
       const questionScore = timer *   10;
       setTotalScore(prevScore => prevScore + questionScore);
     }
-    nextQuestion();
+    if (currentQuestionIndex === questions.length - 1) {
+      setTimer(0);
+    }
+    else{
+      nextQuestion();
+    }
   };
+
+  // Fonction pour joueur le tour suivant 
+  const nextRound = () => {
+    if (round === totalRounds) {
+      toast.success("Bravo, la partie est terminer vérifions votre score");
+      setRound(1);
+      setRoundsCompleted(0);
+      resetGameState();
+      return;
+    }
+  
+    setRound(round + 1);
+    setRoundsCompleted(roundsCompleted + 1);
+  
+    if (roundsCompleted < totalRounds - 1) {
+      newGame();
+    }
+  };
+
+  // réinitialiser le jeu
+  const resetGameState = () => {
+    setCurrentQuestionIndex(0);
+    setQuestions([]);
+    setTimer(20);
+    setUserAnswers([]);
+  };
+  
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -86,13 +149,21 @@ function Question() {
           )}
           <div>
             <span className="mr-3">Chrono :</span> 
-            <Progress
-              type="circle"
-              percent={(timer /  20) *  100}
-              strokeColor={timer >  5 ? '#52c41a' : '#f5222d'} 
-              format={() => `${Math.round((timer /   20) *   100)}%`}
-              size={80}
-            />
+              <Progress
+                type="circle"
+                percent={(timer / 20) * 100}
+                strokeColor={timer > 5 ? '#52c41a' : '#f5222d'} 
+                format={() => {
+                  const countDown = 20 - timer;
+                  if (countDown <= 0) {
+                    return '00:20';
+                  }
+                  const minutes = Math.floor((20 - timer) / 60);
+                  const seconds = Math.round(20 - countDown);
+                  return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                }}
+                size={80}
+              />
           </div>
       </div>
 
@@ -124,9 +195,9 @@ function Question() {
       </div>
 
       <div className="flex justify-center font-bold text-3xl pt-10 pb-20 ml-20 mr-20">
-        <span>Score total :</span> {totalScore}
+        <span className="mr-2">Score total : </span> {totalScore} 
+        <span className="ml-2 ml-5">Round en cours : </span> {round}/{totalRounds}
       </div>
-
     </div>
   );
 }

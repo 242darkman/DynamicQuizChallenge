@@ -24,15 +24,19 @@ function WaitingHome() {
   
   //Gérer le clique pour débuter le quizz
   const startGame = () => {
-    setSpinning(true);
+    router.push('/room/question');
+
+    /*
+    //setSpinning(true);
     const toastLoading = toast.loading("Juste un instant, nous préparons les questions");
+    //console.log('les détails ', room);
     const gameConfig = {
       theme: room.room.settings.theme,
       numberOfQuestions: room.room.settings.numberOfQuestions,
       numberOfRounds: room.room.settings.numberOfRounds
     };
     socket.emit('generateQuestionWithParams', gameConfig);
-
+    const response = 'la reponse est la';
     // Ecouter la réponse du serveur
     socket.on('response', (responses) => {
       storeServerResponse(responses);
@@ -40,10 +44,11 @@ function WaitingHome() {
       // Vérifiez si la réponse a été reçue avant de rediriger
       if (responses) {
         toast.dismiss(toastLoading);
-        setSpinning(false);
+        //setSpinning(false);
         router.push('/room/question');
       }
-    });
+    });*/
+    
   };
 
   return (    
