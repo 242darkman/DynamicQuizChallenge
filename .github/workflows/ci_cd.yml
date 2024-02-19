@@ -96,3 +96,20 @@ jobs:
           fi
           docker build -t 242darkman/dynamic_quiz_challenge:$TAG -f packages/core-dynamic-quizz/Dockerfile .
           docker push 242darkman/dynamic_quiz_challenge:$TAG # Construit et pousse l'image Docker
+
+  # Job pour générer les notes de release
+  generate-release-notes:
+    runs-on: ubuntu-latest
+    needs: [lint-and-build, backend-test, docker-and-deploy] # Dépend du succès des jobs précédents
+    if: github.event_name == 'push' && github.ref_type == 'tag' # S'exécute seulement pour les tags
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Récupère tous les commits
+
+      - name: Generate Release Notes
+        uses: release-drafter/release-drafter@v5 # Génère les notes de release
+        with:
+          config-name: .github/release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Utilise le token GitHub pour l'authentification
