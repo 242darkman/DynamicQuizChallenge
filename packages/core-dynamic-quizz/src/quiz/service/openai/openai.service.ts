@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import OpenAI from 'openai'; 
+import OpenAI from 'openai';
 
 @Injectable()
 export class OpenAIService {
@@ -20,12 +20,22 @@ export class OpenAIService {
     level: string,
     numberOfQuestions: number,
   ): Promise<any[]> {
-    
     try {
       const questionsArray = [];
 
       while (questionsArray.length < numberOfQuestions) {
-        const prompt = `Generate a multiple-choice question about ${theme} at ${level} level. Include one correct answer and three incorrect answers. Format the question as follows:\n- Question: [The question here]\n- Correct answer: [The correct answer here]\n- Incorrect answers: [Three incorrect answers here]`;
+        const isMixedTheme = theme === 'mixed';
+        const prompt = isMixedTheme
+          ? `Generate a multiple-choice question in French for any theme at ${level} level. Include the theme of the question, one correct answer, and three incorrect answers. Format the question as follows:
+- Theme: [The specific theme here]
+- Question: [The question here]
+- Correct answer: [The correct answer here]
+- Incorrect answers: [Three incorrect answers here]`
+          : `Generate a multiple-choice question about ${theme} at ${level} level in French. Include one correct answer and three incorrect answers. Format the question as follows:
+- Question: [The question here]
+- Correct answer: [The correct answer here]
+- Incorrect answers: [Three incorrect answers here]`;
+
         const response = await this.openai.chat.completions.create({
           model: 'gpt-3.5-turbo',
           messages: [
@@ -37,41 +47,40 @@ export class OpenAIService {
         });
 
         const responseText = response.choices[0].message.content;
+        const themeMatch = isMixedTheme
+          ? responseText.match(/Theme: (.+)/)
+          : null;
+        const themeSpecific = themeMatch ? themeMatch[1] : theme;
         const questionMatch = responseText.match(/Question: (.+)/);
         const correctAnswerMatch = responseText.match(/Correct answer: (.+)/);
         const incorrectAnswersMatch = responseText.match(
           /Incorrect answers: (.+), (.+), (.+)/,
         );
 
-        if (questionMatch && correctAnswerMatch && incorrectAnswersMatch) {
-          const question = questionMatch[1];
-          const correctAnswer = correctAnswerMatch[1];
-          const incorrectAnswers = incorrectAnswersMatch.slice(1, 4);
+        if (!questionMatch || !correctAnswerMatch || !incorrectAnswersMatch)
+          continue;
 
-          // Construisez l'objet question ici
-          const questionObj = {
-            theme,
-            question,
-            correct_answer: correctAnswer,
-            incorrect_answers: incorrectAnswers,
-          };
+        const question = questionMatch[1];
+        const correctAnswer = correctAnswerMatch[1];
+        const incorrectAnswers = incorrectAnswersMatch.slice(1, 4);
 
-          if (
-            !questionsArray.some((q) => q.question === questionObj.question)
-          ) {
-            questionsArray.push(questionObj);
-          }
-        }
+        const questionObj = {
+          theme: themeSpecific,
+          question,
+          correct_answer: correctAnswer,
+          incorrect_answers: incorrectAnswers,
+        };
+
+        if (questionsArray.some((q) => q.question === questionObj.question))
+          continue;
+
+        questionsArray.push(questionObj);
       }
       return questionsArray;
     } catch (error) {
       throw new Error(`Error generating questions: ${error}`);
     }
-    
-
-    return;
   }
-
 
   async generateHint(question: string): Promise<string> {
     try {
@@ -80,7 +89,7 @@ export class OpenAIService {
         messages: [
           {
             role: 'system',
-            content: `Generate a hint for the following question: "${question}"`,
+            content: `Generate in French a hint for the following question: "${question}"`,
           },
         ],
       });

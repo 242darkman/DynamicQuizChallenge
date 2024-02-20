@@ -36,7 +36,7 @@ import { OpenAIService } from '../quiz/service/openai/openai.service';
     JoinedRoomService,
     QuizService,
     RoomSettingService,
-    OpenAIService
+    OpenAIService,
   ],
 })
 export class QuizModule {}
