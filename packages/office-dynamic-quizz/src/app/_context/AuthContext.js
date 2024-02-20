@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useEffect, useState, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 import jwt from "jsonwebtoken";
 import { useRouter } from "next/navigation";
@@ -45,11 +45,11 @@ export const AuthProvider = ({ children }) => {
   };
 
 
-  const logout = () => {
+  const logout = (path) => {
     localStorage.removeItem("app_token");
     setUser(null);
     setAuthToken(null);
-    router.push("/");
+    router.push(path);
   };
 
   return (
