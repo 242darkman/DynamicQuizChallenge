@@ -21,8 +21,7 @@ import { UserInterface } from 'src/user/model/user.interface';
 import { UserService } from 'src/user/service/user-service/user.service';
 import get from 'lodash/get';
 import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
-import { log, table } from 'console';
-import {OpenAIService} from 'src/quiz/service/openai/openai.service'
+import { OpenAIService } from 'src/quiz/service/openai/openai.service';
 
 @WebSocketGateway({
   cors: {
@@ -47,7 +46,7 @@ export class QuizGateway
     private roomSettingService: RoomSettingService,
     private connectedUserService: ConnectedUserService,
     private joinedRoomService: JoinedRoomService,
-    private openAIService : OpenAIService
+    private openAIService: OpenAIService,
   ) {}
 
   /**
@@ -224,24 +223,29 @@ export class QuizGateway
     }
   }
 
-
   /**
    * Méthode pour générer les questions
-   * @param client 
-   * @param gameConfig 
+   * @param client
+   * @param gameConfig
    */
   @SubscribeMessage('generateQuestionWithParams')
-  async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
+  async generateQuestionWithParams(
+    client: Socket,
+    gameConfig: { theme: string; level: string; numberOfQuestions: number },
+  ) {
     const { theme, numberOfQuestions, level } = gameConfig;
 
-    try{
-      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
+    try {
+      const response = await this.openAIService.generateQuestions(
+        theme,
+        level,
+        numberOfQuestions,
+      );
       client.emit('response', response);
-      this.logger.debug(`la réponse du serveur :` , response);
-      
-    }catch (error) {
+      this.logger.debug(`la réponse du serveur :`, response);
+    } catch (error) {
       this.logger.error(
-        `Erreur lors de la tentative récupération des questions : ${error.message}`,
+        `Erreur lors de la tentative de récupération des questions : ${error.message}`,
       );
     }
   }
