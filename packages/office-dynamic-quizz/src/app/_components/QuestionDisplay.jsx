@@ -1,13 +1,14 @@
 'use client';
 
 import { BookOutlined, BulbFilled, BulbOutlined } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
 
 import { useSocket } from '@/app/_context/SocketContext';
-import { useState } from 'react';
 
 const QuestionDisplay = ({ question, currentQuestionIndex, handleAnswer }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isHintVisible, setIsHintVisible] = useState(false);
+  const [hint, setHint] = useState('');
   const socket = useSocket();
 
   const onAnswerClick = (answer, isCorrect) => {
@@ -17,7 +18,20 @@ const QuestionDisplay = ({ question, currentQuestionIndex, handleAnswer }) => {
 
   const toggleHint = () => {
     setIsHintVisible(!isHintVisible);
+    socket.emit('generateHint', question.question);
   };
+
+  useEffect(() => {
+    socket.once('onGenerateHintResponse', (response) => {
+      if (response) {
+        setHint(response.hint);
+      }
+    });
+
+    return () => {
+      socket.off('onGenerateHintResponse');
+    }
+  })
 
   return (
     <div className="mx-auto text-center mt-8 mb-8">
@@ -50,7 +64,7 @@ const QuestionDisplay = ({ question, currentQuestionIndex, handleAnswer }) => {
         </button>
         {isHintVisible && (
           <div className="absolute bottom-full mb-2 w-64 p-4 bg-gray-400 text-gray-800 rounded shadow-lg">
-            <p>Voici un indice pour la question.</p>
+            {hint}
           </div>
         )}
       </div>

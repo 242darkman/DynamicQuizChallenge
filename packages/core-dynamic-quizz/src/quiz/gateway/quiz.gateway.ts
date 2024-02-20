@@ -250,6 +250,21 @@ export class QuizGateway
     }
   }
 
+  @SubscribeMessage('generateHint')
+  async generateHint(client: Socket, question: string) {
+    try {
+      const hint = await this.openAIService.generateHint(question);
+
+      this.server.to(client.id).emit('onGenerateHintResponse', {
+        success: true,
+        hint,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Erreur lors de la tentative de récupération des indices : ${error.message}`,
+      );
+    }
+  }
 
   /**
    * Handle the event when a user joins a room.

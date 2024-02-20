@@ -89,7 +89,7 @@ export class OpenAIService {
         messages: [
           {
             role: 'system',
-            content: `Generate a hint for the following question: "${question}"`,
+            content: `Generate in French a hint for the following question: "${question}"`,
           },
         ],
       });

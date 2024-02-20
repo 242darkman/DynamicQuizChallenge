@@ -143,6 +143,7 @@ function Question() {
       setRoundsCompleted(0);
       resetGameState();
       router.push('/room/ranking');
+      return;
     }
   
     setIsLoading(true);
