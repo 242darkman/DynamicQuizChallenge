@@ -1,16 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
-import { useRoom } from '@/app/_context/RoomContext';
-import withAuth from "@/app/middleware";
-import { useSocket } from '@/app/_context/SocketContext';
-import { Progress } from 'antd';
-import { toast } from "sonner";
+import { translateLevelValueToFrench, translateThemeValueToFrench } from "@/app/_constants/translationMap";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import FooterUI from "@/app/_components/ui/FooterUI";
+import HeaderUI from "@/app/_components/ui/HeaderUI";
+import QuestionDisplay from "@/app/_components/QuestionDisplay";
+import { Spin } from 'antd';
+import { toast } from "sonner";
+import { useAuth } from "@/app/_context/AuthContext";
+import { useRoom } from '@/app/_context/RoomContext';
+import { useRouter } from "next/navigation";
+import { useSocket } from '@/app/_context/SocketContext';
+import withAuth from "@/app/middleware";
 
 //Fonction pour mélanger les questions
-function shuffleArray(array) {
+const shuffleArray = (array) => {
   const newArray = [...array];
   for (let i = newArray.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -21,54 +26,54 @@ function shuffleArray(array) {
 
 function Question() {
   const router = useRouter();
-  const { clearRoomData, serverResponse, room , storeServerResponse, storeScore} = useRoom();
+  const { serverResponse, room , storeServerResponse, storeScore} = useRoom();
   const socket = useSocket();
-  const [timer, setTimer] = useState(20);
-  const [username, setUser] = useState(null);
+  const { user, logout } = useAuth();
+  const [timer, setTimer] = useState(30);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
   const [questions, setQuestions] = useState([]); 
   const [userAnswers, setUserAnswers] = useState([]);
   const [totalScore, setTotalScore] = useState(0);
-  const [roomData, setRoomData] = useState(room.room.settings);
   const [round, setRound] = useState(1);
-  const [totalRounds, setTotalRounds] = useState(roomData.numberOfRounds);
   const [roundsCompleted, setRoundsCompleted] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Juste un instant, nous préparons les questions...");
+  const roomSettings = useMemo(() => room && room.room && room.room.settings ? room.room.settings : {}, [room]);
+  const totalRounds = useMemo(() => roomSettings.numberOfRounds, [roomSettings]);
+  const currentDifficulty = translateLevelValueToFrench(roomSettings.level);
+  const currentTheme = translateThemeValueToFrench(roomSettings.theme);
 
   const newGame = (() => {
 
     resetGameState();
-    const toastLoading = toast.loading("Juste un instant, nous préparons les questions");
+
+    const loadingMsg = round === totalRounds
+      ? "Juste un instant, nous préparons les questions pour votre dernier tour..."
+      : round > 1
+      ? "Juste un instant, nous préparons les questions pour le prochain tour..."
+      : "Juste un instant, nous préparons les questions...";
+    setLoadingMessage(loadingMsg);
 
     const gameConfig = {
-      theme: roomData.theme,
-      numberOfQuestions: roomData.numberOfQuestions,
-      numberOfRounds: roomData.numberOfRounds
+      theme: roomSettings.theme,
+      numberOfQuestions: roomSettings.numberOfQuestions,
+      numberOfRounds: roomSettings.numberOfRounds
     };
     socket.emit('generateQuestionWithParams', gameConfig);
     socket.on('response', (response) => {
-      storeServerResponse(response);
-
       if (response) {
-        toast.dismiss(toastLoading);
+        storeServerResponse(response);
+        setIsLoading(false);
       }
     });
   });
 
   useEffect(() => {
+    setIsLoading(true);
     newGame()
-  }, [socket]);
+  }, [round]);
 
   useEffect(() => {
-    //clearRoomData();
-
-    const token = localStorage.getItem('app_token');
-    if (token) {
-      const payloadBase64 = token.split('.')[1];
-      const payloadJson = atob(payloadBase64);
-      const payload = JSON.parse(payloadJson);
-      setUser(payload.user.username);
-    }
-
     if (questions.length > 0) {
       if (timer > 0) {
         const countdownInterval = setInterval(() => {
@@ -95,7 +100,7 @@ function Question() {
   const nextQuestion = useCallback(() => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setTimer(20);
+      setTimer(30);
     } else{
       nextRound();
     }
@@ -112,15 +117,21 @@ function Question() {
 
     // Calculez le score de la question
     if (isCorrect) {
-      const questionScore = timer *   10;
-      setTotalScore(prevScore => prevScore + questionScore);
+      const baseScoreForAccuracy = isCorrect ? 100 : 0; // Points basés sur la précision
+      const speedBonus = isCorrect ? (timer / 45) * 50 : 0; // Points bonus pour la vitesse
+      const scoreToAdd = baseScoreForAccuracy + speedBonus;
+      
+      setTotalScore((score) => Math.ceil(score + scoreToAdd));
     }
-    if (currentQuestionIndex === questions.length - 1) {
-      setTimer(0);
-    }
-    else{
-      nextQuestion();
-    }
+
+    setTimeout(() => {
+      if (currentQuestionIndex === questions.length - 1) {
+        setTimer(0);
+      }
+      else{
+        nextQuestion();
+      }
+    }, 1000)
   };
 
   // Fonction pour joueur le tour suivant 
@@ -132,9 +143,9 @@ function Question() {
       setRoundsCompleted(0);
       resetGameState();
       router.push('/room/ranking');
-      //return;
     }
   
+    setIsLoading(true);
     setRound(round + 1);
     setRoundsCompleted(roundsCompleted + 1);
   
@@ -147,67 +158,45 @@ function Question() {
   const resetGameState = () => {
     setCurrentQuestionIndex(0);
     setQuestions([]);
-    setTimer(20);
+    setTimer(30);
     setUserAnswers([]);
   };
-  
-
-  const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
+    <div className="flex flex-col min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
+      <HeaderUI
+        username={user ? user.username : 'N/A'}
+        timer={timer}
+        theme={currentTheme}
+        difficulty={currentDifficulty}
+        isPrivate={room && room.room ? room.room.isPrivate : false}
+        roomName={room && room.room ? room.room.name : 'N/A'}
+      />
 
-      <div className="flex justify-between font-bold text-3xl pt-10 pb-20 ml-20 mr-40">
-          {username && (
-            <p className="text-m text-white">
-              <span>Pseudo:</span> {username}
-            </p>
-          )}
-          <div>
-            <span className="mr-3">Chrono :</span> 
-              <Progress
-                type="circle"
-                percent={(timer / 20) * 100}
-                strokeColor={timer > 5 ? '#52c41a' : '#f5222d'} 
-                format={() => {
-                  const countDown = 20 - timer;
-                  if (countDown <= 0) {
-                    return '00:20';
-                  }
-                  const minutes = Math.floor((20 - timer) / 60);
-                  const seconds = Math.round(20 - countDown);
-                  return `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                }}
-                size={80}
-              />
-          </div>
-      </div>
-
-      <div className="question-container">
-        {currentQuestion && (
-          <div className="question-wrapper mx-auto text-center mt-8 mb-8">
-            <h2 className="text-2xl font-bold mb-20">
-              Question {currentQuestionIndex +  1} : {currentQuestion.question}
-            </h2>
-            <div className="grid grid-cols-2 gap-4 max-w-screen-lg mx-auto h-60">
-            {currentQuestion.answers.map((answer, index) => (
-        <button
-            key={index}
-            onClick={() => handleAnswer(answer === currentQuestion.correct_answer)}
-            className="btn bg-white w-full text-xl text-mainColor hover:bg-secondColor rounded-lg"
-        >
-            {answer}
-        </button>
-    ))}
+      <div className="flex-grow flex items-center justify-center bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center p-4">
+        {isLoading ? (
+          <>
+            <div className="text-center text-white">
+              <Spin size="large" />
+              <p>{loadingMessage}</p>
             </div>
-          </div>
+          </>
+        ) : (
+          questions.length > 0 && currentQuestionIndex < questions.length && (
+            <QuestionDisplay
+              question={questions[currentQuestionIndex]}
+              currentQuestionIndex={currentQuestionIndex}
+              handleAnswer={handleAnswer}
+            />
+          )
         )}
       </div>
 
-      <div className="flex justify-center font-bold text-3xl pt-10 pb-20 ml-20 mr-20">
-        <span className="mr-2">Score total : </span> {totalScore} 
-        <span className="ml-2 ml-5">Round en cours : </span> {round}/{totalRounds}
-      </div>
+      <FooterUI
+        totalScore={totalScore}
+        round={round}
+        totalRounds={totalRounds}
+      />
     </div>
   );
 }
