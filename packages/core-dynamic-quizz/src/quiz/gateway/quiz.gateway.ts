@@ -299,9 +299,20 @@ export class QuizGateway
    * @return {Promise<void>} description of return value
    */
   @SubscribeMessage('leaveRoom')
-  async onLeaveRoom(socket: Socket) {
-    // supprime la connexion du salon rejoint
-    await this.joinedRoomService.deleteBySocketId(socket.id);
+  async onLeaveRoom(client: Socket) {
+    try {
+      // supprime la connexion du salon rejoint
+      await this.joinedRoomService.deleteBySocketId(client.id);
+      this.server.to(client.id).emit('leaveRoomResponse', {
+        success: true,
+        message: `Partir déjà ? J'espère que le score du gagnant ne vous a pas poussé à chercher refuge en ermite ! Tous ont besoin d'une pause pour rire et se reposer. Revenez vite pour plus d'aventures et moins d'erreurs stratégiques. À bientôt ! 😉`,
+      });
+    } catch (error) {
+      this.server.to(client.id).emit('leaveRoomResponse', {
+        success: false,
+        message: `Erreur lors de la suppression de la connexion : ${error.message}`,
+      });
+    }
   }
 
   /**
