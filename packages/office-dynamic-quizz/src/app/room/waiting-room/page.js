@@ -1,54 +1,41 @@
 'use client';
 import { useState, useEffect } from 'react';
 import withAuth from "@/app/middleware";
-import { useRoom } from '@/app/_context/RoomContext';
 import { useSocket } from '@/app/_context/SocketContext';
 import { useRouter } from "next/navigation";
-import { Spin } from 'antd'; 
-import { toast } from "sonner";
 
 
 function WaitingHome() {
   const [participants, setParticipants] = useState([]);
-  const REQUIRED_NUMBER_OF_PARTICIPANTS = 5; 
-  const { roomSettings, room, storeServerResponse } = useRoom();
   const socket = useSocket();
   const router = useRouter();
-  const [spinning, setSpinning] = useState(false);
+
 
   useEffect(() => {
-    const fetchedParticipants = getNumberOfParticipantsFromLink();
-    setParticipants(new Array(fetchedParticipants).fill('Participant')); 
-  }, []);
+    socket.emit('getAllParticipantsInJoinedRooms');
 
+  socket.on('allParticipants', (participants) => {
+    if (participants) {
+      setParticipants(participants);
+    }
+  });
+
+  socket.on('updateJoinedRooms', (participants) => {
+    if (participants) {
+      setParticipants(participants);
+    }
+  });
+
+  socket.on('redirectToGamePage', () => {
+    router.push('/room/question');
+  });
+
+  }, [socket]);
   
   //Gérer le clique pour débuter le quizz
   const startGame = () => {
+    socket.emit('startGame');
     router.push('/room/question');
-
-    /*
-    //setSpinning(true);
-    const toastLoading = toast.loading("Juste un instant, nous préparons les questions");
-    //console.log('les détails ', room);
-    const gameConfig = {
-      theme: room.room.settings.theme,
-      numberOfQuestions: room.room.settings.numberOfQuestions,
-      numberOfRounds: room.room.settings.numberOfRounds
-    };
-    socket.emit('generateQuestionWithParams', gameConfig);
-    const response = 'la reponse est la';
-    // Ecouter la réponse du serveur
-    socket.on('response', (responses) => {
-      storeServerResponse(responses);
-
-      // Vérifiez si la réponse a été reçue avant de rediriger
-      if (responses) {
-        toast.dismiss(toastLoading);
-        //setSpinning(false);
-        router.push('/room/question');
-      }
-    });*/
-    
   };
 
   return (    
@@ -58,34 +45,16 @@ function WaitingHome() {
         Commencer la partie
       </button>
 
-
-      {participants.length < REQUIRED_NUMBER_OF_PARTICIPANTS ? (
-        <div>
-          <p>En attente des autres participants...</p>
-        </div>
-      ) : (
-        <div>
-          <p>Nombre de participants atteint !</p>
-          <button onClick={startGame} className="my-4 bg-green-500 text-white px-4 py-2 rounded">
-            Ancien
-          </button>
-        </div>
-      )}
-
-      <div>
+      <p>Les participants ... </p>
+      <ul>
         {participants.map((participant, index) => (
-          <p key={index}>{participant} </p>
+          <li key={index}>{participant.user_username}</li>
         ))}
-      </div>
-      <Spin spinning={spinning} fullscreen />
+      </ul>
+
     </main>
-    
   );
 }
-
-const getNumberOfParticipantsFromLink = () => {
-  return Math.floor(Math.random() * 10) + 1;
-};
 
 
 export default withAuth(WaitingHome);

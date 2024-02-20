@@ -226,28 +226,6 @@ export class QuizGateway
 
 
   /**
-   * Méthode pour générer les questions
-   * @param client 
-   * @param gameConfig 
-   */
-  @SubscribeMessage('generateQuestionWithParams')
-  async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
-    const { theme, numberOfQuestions, level } = gameConfig;
-
-    try{
-      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      client.emit('response', response);
-      this.logger.debug(`la réponse du serveur :` , response);
-      
-    }catch (error) {
-      this.logger.error(
-        `Erreur lors de la tentative récupération des questions : ${error.message}`,
-      );
-    }
-  }
-
-
-  /**
    * Handle the event when a user joins a room.
    *
    * @param {Socket} socket - The socket object
@@ -291,6 +269,61 @@ export class QuizGateway
       });
     }
   }
+
+
+  /**
+   * Méthode pour générer les questions
+   * @param client 
+   * @param gameConfig 
+   */
+    @SubscribeMessage('generateQuestionWithParams')
+    async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
+      const { theme, numberOfQuestions, level } = gameConfig;
+  
+      try{
+        const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
+       
+        client.broadcast.emit('response', response);
+        client.emit('response', response);
+        this.logger.debug(`la réponse du serveur :` , response);
+        
+      }catch (error) {
+        this.logger.error(
+          `Erreur lors de la tentative récupération des questions : ${error.message}`,
+        );
+      }
+    }
+
+
+  /**
+ * Récupérer la liste des joueurs sur la page d'attente
+ * @param client 
+ */
+  @SubscribeMessage('getAllParticipantsInJoinedRooms')
+  async getAllParticipantsInJoinedRooms(client: Socket) {
+    try {
+      const participants = await this.joinedRoomService.findAll();
+      
+      // Envoyer les salles jointes au client
+      client.emit('allParticipants', participants);
+      this.logger.debug(`La réponse du serveur :` , participants);
+      client.broadcast.emit('updateJoinedRooms', participants);
+
+    } catch (error) {
+      this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
+    }
+  }
+  
+  
+  /**
+   * Rédiriger tous les participants 
+   */
+  @SubscribeMessage('startGame')
+  startGame(client: Socket) {
+    client.emit('redirectToGamePage');
+    client.broadcast.emit('redirectToGamePage');
+  }
+
 
   /**
    * A description of the entire function.
