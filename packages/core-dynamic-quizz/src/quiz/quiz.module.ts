@@ -4,8 +4,6 @@ import { ConnectedUserService } from './service/connected-user/connected-user.se
 import { JoinedRoomEntity } from 'src/quiz/model/joined-room/joined-room.entity';
 import { JoinedRoomService } from './service/joined-room/joined-room.service';
 import { Module } from '@nestjs/common';
-import { QuestionEntity } from 'src/quiz/model/question/question.entity';
-import { QuizEntity } from 'src/quiz/model/quiz/quiz.entity';
 import { QuizGateway } from 'src/quiz/gateway/quiz.gateway';
 import { QuizService } from './service/quiz/quiz.service';
 import { RoomEntity } from 'src/quiz/model/room/room.entity';
@@ -22,13 +20,11 @@ import { OpenAIService } from '../quiz/service/openai/openai.service';
     AuthModule,
     UserModule,
     TypeOrmModule.forFeature([
-      QuestionEntity,
-      QuizEntity,
       RoomEntity,
       RoomSettingEntity,
       JoinedRoomEntity,
       ConnectedUserEntity,
-      RankingEntity
+      RankingEntity,
     ]),
   ],
   providers: [
