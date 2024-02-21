@@ -9,7 +9,7 @@ export const themes = [
   { value: "arts", label: "Arts" },
   { value: "technology", label: "Technologie" },
   { value: "cinema", label: "Cinéma" },
-  { value: "random", label: "Aléatoire" },
+  { value: "mixed", label: "Mixte" },
 ];
 
 export const levels = [
