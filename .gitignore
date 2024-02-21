@@ -2,3 +2,10 @@
 package-lock.json
 
 .env
+
+./packages/.DS_Store
+
+./packages/core-dynamic-quizz/dist
+./packages/office-dynamic-quizz/dist
+
+.DS_Store
