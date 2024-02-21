@@ -1,18 +1,19 @@
-# Utilise l'image officielle de Node.js 18 comme base
 FROM node:18
 
-# Définit le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# Copie le package.json et package-lock.json
-COPY packages/core-dynamic-quizz/package*.json ./
+# Copiez les fichiers package.json et package-lock.json depuis le contexte de construction vers l'image Docker
+COPY package*.json ./
 
-# Installe les dépendances du projet
-# hadolint ignore=DL3003
+# Installez les dépendances globales
+RUN npm install -g @nestjs/cli
+
+# Copiez le reste des fichiers de l'application depuis le contexte de construction vers l'image Docker
+COPY . .
+
+# Installez les dépendances de l'application
 RUN npm install
 
-# Copie le reste des fichiers du projet
-COPY packages/core-dynamic-quizz/ .
+EXPOSE  5000
 
-# Lance l'application
 CMD ["npm", "run", "start"]
