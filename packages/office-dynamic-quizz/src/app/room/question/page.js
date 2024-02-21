@@ -12,9 +12,6 @@ import { useAuth } from "@/app/_context/AuthContext";
 import { useRoom } from '@/app/_context/RoomContext';
 import { useRouter } from "next/navigation";
 import { useSocket } from '@/app/_context/SocketContext';
-import { Progress } from 'antd';
-import { toast } from "sonner";
-import { useAuth } from "@/app/_context/AuthContext";
 import withAuth from "@/app/middleware";
 
 //Fonction pour mélanger les questions
@@ -30,10 +27,8 @@ const shuffleArray = (array) => {
 function Question() {
   const router = useRouter();
   const { user} = useAuth();
-  const { clearRoomData, serverResponse, room, storeServerResponse } = useRoom() || {};
-  const { serverResponse, room , storeServerResponse, storeScore} = useRoom();
+  const { serverResponse, room, storeServerResponse } = useRoom() || {};
   const socket = useSocket();
-  const { user, logout } = useAuth();
   const [timer, setTimer] = useState(30);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); 
   const [questions, setQuestions] = useState([]); 
@@ -45,14 +40,16 @@ function Question() {
   const [loadingMessage, setLoadingMessage] = useState("Juste un instant, nous préparons les questions...");
   const roomSettings = useMemo(() => room && room.room && room.room.settings ? room.room.settings : {}, [room]);
   const totalRounds = useMemo(() => roomSettings.numberOfRounds, [roomSettings]);
+  const theme = useMemo(() => roomSettings.theme, [roomSettings]);
+  const numberOfQuestions = useMemo(() => roomSettings.numberOfQuestions, [roomSettings]);
   const currentDifficulty = translateLevelValueToFrench(roomSettings.level);
   const currentTheme = translateThemeValueToFrench(roomSettings.theme);
 
-  const newGame = (() => {
+  const newGame = useCallback(() => {
 
     resetGameState();
 
-    const loadingMsg = round === totalRounds
+    const loadingMsg = round === totalRounds && round > 1
       ? "Juste un instant, nous préparons les questions pour votre dernier tour..."
       : round > 1
       ? "Juste un instant, nous préparons les questions pour le prochain tour..."
@@ -60,23 +57,58 @@ function Question() {
     setLoadingMessage(loadingMsg);
 
     const gameConfig = {
-      theme: roomSettings.theme,
-      numberOfQuestions: roomSettings.numberOfQuestions,
-      numberOfRounds: roomSettings.numberOfRounds
+      theme,
+      numberOfQuestions,
+      numberOfRounds: totalRounds
     };
     socket.emit('generateQuestionWithParams', gameConfig);
+    
     socket.on('response', (response) => {
       if (response) {
         storeServerResponse(response);
         setIsLoading(false);
       }
     });
-  });
+
+  }, [socket, round, theme, totalRounds, numberOfQuestions ]);
 
   useEffect(() => {
     setIsLoading(true);
     newGame()
-  }, [round]);
+  }, [round, newGame]);
+
+  // Fonction pour joueur le tour suivant 
+  const nextRound = useCallback(() => {
+    if (round === totalRounds) {
+      toast.success("Bravo, la partie est terminer vérifions votre score");
+      setRound(1);
+      setRoundsCompleted(0);
+      resetGameState();
+      socket.emit('createRanking', totalScore);
+      router.push('/room/ranking');
+      return;
+    }
+  
+    setIsLoading(true);
+    setRound(round + 1);
+    setRoundsCompleted(roundsCompleted + 1);
+  
+    if (roundsCompleted < totalRounds - 1) {
+      newGame();
+    }
+  },[newGame, round, roundsCompleted, router, socket, totalRounds,totalScore]);
+
+
+  // Fonction pour la question suivante
+  const nextQuestion = useCallback(() => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setTimer(30);
+    } else{
+      nextRound();
+    }
+  }, [currentQuestionIndex, questions, nextRound]);
+
 
   useEffect(() => {
     if (questions.length > 0) {
@@ -90,7 +122,7 @@ function Question() {
         nextQuestion();
       }
     }
-  }, [timer, questions]);
+  }, [timer, questions, nextQuestion]);
 
   // Initialisation des questions avec la réponse du serveur
   useEffect(() => {
@@ -102,35 +134,6 @@ function Question() {
     }
   }, [serverResponse]);
 
-  const nextQuestion = useCallback(() => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setTimer(30);
-    } else{
-      nextRound();
-    }
-  }, [currentQuestionIndex, questions, userAnswers]);
-  
-  // Fonction pour joueur le tour suivant 
-  const nextRound = () => {
-    if (round === totalRounds) {
-      toast.success("Bravo, la partie est terminer vérifions votre score");
-      setRound(1);
-      setRoundsCompleted(0);
-      resetGameState();
-
-      socket.emit('createRanking', totalScore);
-      router.push('/room/ranking');
-      return;
-    }
-  
-    setRound(round + 1);
-    setRoundsCompleted(roundsCompleted + 1);
-  
-    if (roundsCompleted < totalRounds - 1) {
-      newGame();
-    }
-  };
 
     
   // Fonction pour enregistrer la réponse de l'utilisateur et passer à la question suivante
@@ -158,27 +161,6 @@ function Question() {
         nextQuestion();
       }
     }, 1000)
-  };
-
-  // Fonction pour joueur le tour suivant 
-  const nextRound = () => {
-    if (round === totalRounds) {
-      toast.success("Bravo, la partie est terminer vérifions votre score");
-      storeScore(totalScore);
-      setRound(1);
-      setRoundsCompleted(0);
-      resetGameState();
-      router.push('/room/ranking');
-      return;
-    }
-  
-    setIsLoading(true);
-    setRound(round + 1);
-    setRoundsCompleted(roundsCompleted + 1);
-  
-    if (roundsCompleted < totalRounds - 1) {
-      newGame();
-    }
   };
 
   // réinitialiser le jeu

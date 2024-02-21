@@ -43,6 +43,14 @@ export const SocketProvider = ({ children }) => {
 
       if (!newSocket.connected) newSocket.connect();
 
+      newSocket.on('error', () => {
+        newSocket.emit('socketError');
+      });
+
+      newSocket.on('disconnect', () => {
+        newSocket.emit('socketError');
+      });
+
       return () => {
         newSocket.disconnect();
       };

@@ -56,7 +56,7 @@ function Room() {
         socket.off('error', handleError);
       }
     };
-  }, [socket, router, storeRoomUsers]);
+  }, [socket, router, storeRoomUsers, setRooms, storeRoomSettings]);
 
 
   const handleOpenModal = (type) => {
