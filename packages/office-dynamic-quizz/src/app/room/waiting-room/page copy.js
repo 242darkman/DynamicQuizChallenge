@@ -5,7 +5,7 @@ import { useSocket } from '@/app/_context/SocketContext';
 import { useRouter } from "next/navigation";
 
 
-function WaitingHome() {
+function WaitingHomecopie() {
   const [participants, setParticipants] = useState([]);
   const socket = useSocket();
   const router = useRouter();
@@ -14,23 +14,23 @@ function WaitingHome() {
   useEffect(() => {
     socket.emit('getAllParticipantsInJoinedRooms');
 
-    socket.on('allParticipants', (participants) => {
-      if (participants) {
-        setParticipants(participants);
-      }
-    });
+  socket.on('allParticipants', (participants) => {
+    if (participants) {
+      setParticipants(participants);
+    }
+  });
 
-    socket.on('updateJoinedRooms', (participants) => {
-      if (participants) {
-        setParticipants(participants);
-      }
-    });
+  socket.on('updateJoinedRooms', (participants) => {
+    if (participants) {
+      setParticipants(participants);
+    }
+  });
 
-    socket.on('redirectToGamePage', () => {
-      router.push('/room/question');
-    });
+  socket.on('redirectToGamePage', () => {
+    router.push('/room/question');
+  });
 
-  },[socket]);
+  }, [socket]);
   
   //Gérer le clique pour débuter le quizz
   const startGame = () => {
@@ -57,4 +57,4 @@ function WaitingHome() {
 }
 
 
-export default withAuth(WaitingHome);
+export default withAuth(WaitingHomecopie);

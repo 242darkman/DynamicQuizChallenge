@@ -7,8 +7,6 @@ import withAuth from "@/app/middleware";
 import { useSocket } from '@/app/_context/SocketContext';
 import { Progress } from 'antd';
 import { toast } from "sonner";
-import { useAuth } from "@/app/_context/AuthContext";
-
 
 
 //Fonction pour mélanger les questions
@@ -21,11 +19,9 @@ function shuffleArray(array) {
   return newArray;
 }
 
-function Question() {
+function QuestionCopie() {
   const router = useRouter();
-  const { user} = useAuth();
-  const { clearRoomData, serverResponse, room, storeServerResponse, storeScore } = useRoom() || {};
-
+  const { clearRoomData, serverResponse, room , storeServerResponse, storeScore} = useRoom();
   const socket = useSocket();
   const [timer, setTimer] = useState(20);
   const [username, setUser] = useState(null);
@@ -105,29 +101,7 @@ function Question() {
     }
   }, [currentQuestionIndex, questions, userAnswers]);
   
-  // Fonction pour joueur le tour suivant 
-  const nextRound = () => {
-    if (round === totalRounds) {
-      toast.success("Bravo, la partie est terminer vérifions votre score");
-      storeScore(totalScore);
-      setRound(1);
-      setRoundsCompleted(0);
-      resetGameState();
 
-      socket.emit('ranking', totalScore);
-      router.push('/room/ranking');
-      return;
-    }
-  
-    setRound(round + 1);
-    setRoundsCompleted(roundsCompleted + 1);
-  
-    if (roundsCompleted < totalRounds - 1) {
-      newGame();
-    }
-  };
-
-    
   // Fonction pour enregistrer la réponse de l'utilisateur et passer à la question suivante
   const handleAnswer = (isCorrect) => {
     const answer = {
@@ -149,6 +123,25 @@ function Question() {
     }
   };
 
+  // Fonction pour joueur le tour suivant 
+  const nextRound = () => {
+    if (round === totalRounds) {
+      toast.success("Bravo, la partie est terminer vérifions votre score");
+      storeScore(totalScore);
+      setRound(1);
+      setRoundsCompleted(0);
+      resetGameState();
+      router.push('/room/ranking');
+      //return;
+    }
+  
+    setRound(round + 1);
+    setRoundsCompleted(roundsCompleted + 1);
+  
+    if (roundsCompleted < totalRounds - 1) {
+      newGame();
+    }
+  };
 
   // réinitialiser le jeu
   const resetGameState = () => {
@@ -218,4 +211,4 @@ function Question() {
     </div>
   );
 }
-export default withAuth(Question);
+export default withAuth(QuestionCopie);

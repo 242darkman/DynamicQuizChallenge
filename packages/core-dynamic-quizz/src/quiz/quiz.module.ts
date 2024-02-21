@@ -9,6 +9,7 @@ import { QuizEntity } from 'src/quiz/model/quiz/quiz.entity';
 import { QuizGateway } from 'src/quiz/gateway/quiz.gateway';
 import { QuizService } from './service/quiz/quiz.service';
 import { RoomEntity } from 'src/quiz/model/room/room.entity';
+import { RankingEntity } from './model/ranking/ranking';
 import { RoomService } from './service/room/room.service';
 import { RoomSettingEntity } from 'src/quiz/model/room/setting/room-setting.entity';
 import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
@@ -27,6 +28,7 @@ import { OpenAIService } from '../quiz/service/openai/openai.service';
       RoomSettingEntity,
       JoinedRoomEntity,
       ConnectedUserEntity,
+      RankingEntity
     ]),
   ],
   providers: [

@@ -1,38 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import withAuth from "@/app/middleware";
 import { useRoom } from '@/app/_context/RoomContext';
-import { useAuth } from "@/app/_context/AuthContext";
-import { useSocket } from '@/app/_context/SocketContext';
 
 
-function Ranking() {
+function RankingCopie() {
   const router = useRouter();
-  const socket = useSocket();
-  const { score, participants} = useRoom();
-  const { user} = useAuth();
-  const username = user.username;
-  const [participantsData, setParticipantsData] = useState([]);
-  const [data, setData] = useState([]);
-  
-  // ajouter le participant a la liste
+  const { score} = useRoom();
 
-  useEffect(() => {
-    const updatedParticipantsData = [...participantsData];
-    updatedParticipantsData.push({ username: username, score: score });
-    setParticipantsData(updatedParticipantsData);
-  }, [username, score]);
+  console.log(' le score est ',  score);
 
-  useEffect(() => {
-    if(participantsData.length > 0){
-
-      socket.emit('getParticipantsScore', participantsData);
-    }
-  }, [participantsData]);
-
-      
   return (
     <div className="min-h-screen bg-mainColor bg-[url('/landscape.svg')] bg-cover bg-center">
       <div>
@@ -111,18 +90,16 @@ function Ranking() {
               </tr>
             </thead>
             <tbody>
-              {participantsData.map((participant, index) => (
-                <tr key={index} className="bg-white border-b">
-                  <th
-                    scope="row"
-                    className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap "
-                  >
-                    {index + 1}
-                  </th>
-                  <td className="px-6 py-4">{participant.username}</td>
-                  <td className="px-6 py-4">{participant.score}</td>
-                </tr>
-              ))}
+              <tr className="bg-white border-b">
+                <th
+                  scope="row"
+                  className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap "
+                >
+                  1
+                </th>
+                <td className="px-6 py-4">Silver</td>
+                <td className="px-6 py-4">563</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -131,4 +108,4 @@ function Ranking() {
   );
 }
 
-export default withAuth(Ranking);
+export default withAuth(RankingCopie);

@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { QuizEntity } from 'src/quiz/model/quiz/quiz.entity';
 import { QuizInterface } from 'src/quiz/model/quiz/quiz.interface';
 import { UserEntity } from 'src/user/model/user.entity';
+import { UserInterface } from 'src/user/model/user.interface';
+import { RankingEntity } from 'src/quiz/model/ranking/ranking';
+import { RankingInterface } from 'src/quiz/model/ranking/ranking.interface';
 
 @Injectable()
 export class QuizService {
@@ -12,12 +15,24 @@ export class QuizService {
     private readonly quizRepository: Repository<QuizEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(RankingEntity)
+    private readonly rankingRepository: Repository<RankingEntity>,
   ) {}
 
   async createQuiz(quizData: QuizInterface): Promise<QuizEntity> {
     const newQuiz = this.quizRepository.create(quizData);
     return this.quizRepository.save(newQuiz);
   }
+
+
+  async createRanking(user: UserInterface, score: number): Promise<RankingEntity> {
+    try {
+      console.log('score service ', score);
+        return await this.rankingRepository.save({user, score});
+    } catch (error) {
+        throw new Error(`Erreur lors de la création du classement : ${error.message}`);
+    }
+}
 
   async getUserScores(): Promise<any[]> {
     const query = this.userRepository

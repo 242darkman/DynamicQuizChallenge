@@ -22,7 +22,9 @@ import { UserService } from 'src/user/service/user-service/user.service';
 import get from 'lodash/get';
 import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
 import { log, table } from 'console';
-import {OpenAIService} from 'src/quiz/service/openai/openai.service'
+import {OpenAIService} from 'src/quiz/service/openai/openai.service'; 
+import { QuizService } from '../service/quiz/quiz.service';
+import { UserEntity } from 'src/user/model/user.entity';
 
 @WebSocketGateway({
   cors: {
@@ -44,6 +46,7 @@ export class QuizGateway
     private authService: AuthService,
     private userService: UserService,
     private roomService: RoomService,
+    private quizService: QuizService,
     private roomSettingService: RoomSettingService,
     private connectedUserService: ConnectedUserService,
     private joinedRoomService: JoinedRoomService,
@@ -276,35 +279,60 @@ export class QuizGateway
    * @param client 
    * @param gameConfig 
    */
-    @SubscribeMessage('generateQuestionWithParams')
+  @SubscribeMessage('generateQuestionWithParams')
     async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
-      const { theme, numberOfQuestions, level } = gameConfig;
-  
-      try{
-        const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-       
-        client.broadcast.emit('response', response);
-        client.emit('response', response);
-        this.logger.debug(`la réponse du serveur :` , response);
-        
-      }catch (error) {
-        this.logger.error(
-          `Erreur lors de la tentative récupération des questions : ${error.message}`,
-        );
-      }
+    const { theme, numberOfQuestions, level } = gameConfig;
+
+    try{
+      //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
+      const table = 
+      [
+        {
+            theme: "Histoire",
+            question: "Quelle était la capitale des États-Unis avant Washington, D.C. ?",
+            correct_answer: "Philadelphie",
+            incorrect_answers: ["Boston", "New York", "Chicago"]
+        },
+        {
+            theme: "Science",
+            question: "Quelle est la planète la plus proche du soleil?",
+            correct_answer: "Mercure",
+            incorrect_answers: ["Vénus", "Terre", "Mars"]
+        },
+        {
+            theme: "Culture Générale",
+            question: "Qui a peint 'La Joconde'?",
+            correct_answer: "Leonardo da Vinci",
+            incorrect_answers: ["Michel-Ange", "Raphael", "Caravaggio"]
+        },
+        {
+            theme: "Sports",
+            question: "Dans quel sport les joueurs ont-ils été disqualifiés pour avoir 'influencé les conditions météorologiques'?",
+            correct_answer: "cricket",
+            incorrect_answers: ["Golf", "Football", "Tennis"]
+        },
+      ];
+      const response = table;
+      client.broadcast.emit('response', response);
+      client.emit('response', response);
+      
+    }catch (error) {
+      this.logger.error(
+        `Erreur lors de la tentative récupération des questions : ${error.message}`,
+      );
     }
+  }
 
 
   /**
- * Récupérer la liste des joueurs sur la page d'attente
- * @param client 
- */
+   * Récupérer la liste des joueurs sur la page d'attente
+   * @param client 
+   */
   @SubscribeMessage('getAllParticipantsInJoinedRooms')
   async getAllParticipantsInJoinedRooms(client: Socket) {
     try {
       const participants = await this.joinedRoomService.findAll();
       
-      // Envoyer les salles jointes au client
       client.emit('allParticipants', participants);
       this.logger.debug(`La réponse du serveur :` , participants);
       client.broadcast.emit('updateJoinedRooms', participants);
@@ -313,7 +341,26 @@ export class QuizGateway
       this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
     }
   }
-  
+
+
+  /**
+   * Méthode pour le score
+   * @param client 
+   * @param totalScore 
+   */
+  @SubscribeMessage('ranking')
+  async ranking(client: Socket, score: number) {
+    try {
+      const user: UserInterface = client.data.user;
+      await this.quizService.createRanking(
+        user, 
+        score
+      );
+      
+    } catch (error) {
+      this.logger.error(`Erreur lors du calcul de score : ${error.message}`);
+    }
+  }
   
   /**
    * Rédiriger tous les participants 

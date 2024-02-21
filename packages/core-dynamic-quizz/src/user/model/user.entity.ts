@@ -11,6 +11,7 @@ import {
 import { ConnectedUserEntity } from 'src/quiz/model/connected-user/connected-user.entity';
 import { JoinedRoomEntity } from 'src/quiz/model/joined-room/joined-room.entity';
 import { RoomEntity } from 'src/quiz/model/room/room.entity';
+import { RankingEntity } from 'src/quiz/model/ranking/ranking';
 
 @Entity()
 export class UserEntity {
@@ -34,6 +35,9 @@ export class UserEntity {
 
   @OneToMany(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.room)
   joinedRooms: JoinedRoomEntity[];
+
+  @OneToMany(() => RankingEntity, (ranking) => ranking.user)
+  ranking: RankingEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()
