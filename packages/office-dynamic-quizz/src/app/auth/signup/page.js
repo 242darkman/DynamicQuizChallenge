@@ -15,11 +15,11 @@ export default function Signup() {
 
   const checkUsername = async (username) => {
     const response = await fetch(
-      `http://127.0.0.1:5000/api/users/check-username?username=${username}`, {
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/check-username?username=${username}`, {
         method: "GET",
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': 'http://127.0.0.1:5000',
+          'Access-Control-Allow-Origin': `${process.env.NEXT_PUBLIC_SERVER_URL}`,
         },
       }
     );
@@ -29,7 +29,7 @@ export default function Signup() {
 
   const checkEmail = async (email) => {
     const response = await fetch(
-      `http://127.0.0.1:5000/api/users/check-email?email=${email}`
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/check-email?email=${email}`
     );
     const data = await response.json();
     setEmailAvailable(!data.exists);
@@ -49,7 +49,7 @@ export default function Signup() {
     );
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/users/create", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

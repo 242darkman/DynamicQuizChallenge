@@ -52,82 +52,6 @@ Ce projet est une plateforme de quiz qui offre aux utilisateurs une expérience 
 
 Le Défi Quiz à Thème Personnalisé Dynamique combine ces fonctionnalités clés avec des bonus techniques pour fournir une expérience de jeu immersive tout en assurant performance, sécurité, et scalabilité.
 
-## Structure initiale du Projet
-
-```bash
-.
-├── README.md
-├── docker-compose.yml
-├── package-lock.json
-├── package.json
-├── packages
-│   ├── core-dynamic-quizz
-│   │   ├── README.md
-│   │   ├── nest-cli.json
-│   │   ├── package.json
-│   │   ├── src
-│   │   │   ├── app.controller.spec.ts
-│   │   │   ├── app.controller.ts
-│   │   │   ├── app.module.ts
-│   │   │   ├── app.service.ts
-│   │   │   ├── auth
-│   │   │   │   ├── auth.module.ts
-│   │   │   │   ├── guards
-│   │   │   │   │   └── jwt.guard.ts
-│   │   │   │   ├── service
-│   │   │   │   │   ├── auth.service.spec.ts
-│   │   │   │   │   └── auth.service.ts
-│   │   │   │   └── strategy
-│   │   │   │       └── jwt.strategy.ts
-│   │   │   ├── main.ts
-│   │   │   ├── middleware
-│   │   │   │   ├── auth
-│   │   │   │   │   └── auth.middleware.ts
-│   │   │   │   └── logger
-│   │   │   │       └── logger.middleware.ts
-│   │   │   └── user
-│   │   │       ├── controller
-│   │   │       │   ├── user.controller.spec.ts
-│   │   │       │   └── user.controller.ts
-│   │   │       ├── model
-│   │   │       │   ├── dto
-│   │   │       │   │   ├── create-user.dto.ts
-│   │   │       │   │   └── login-user.dto.ts
-│   │   │       │   ├── login-response.interface.ts
-│   │   │       │   ├── user.entity.ts
-│   │   │       │   └── user.interface.ts
-│   │   │       ├── service
-│   │   │       │   ├── user-helper
-│   │   │       │   │   ├── user-helper.service.spec.ts
-│   │   │       │   │   └── user-helper.service.ts
-│   │   │       │   └── user-service
-│   │   │       │       ├── user.service.spec.ts
-│   │   │       │       └── user.service.ts
-│   │   │       └── user.module.ts
-│   │   ├── test
-│   │   │   ├── app.e2e-spec.ts
-│   │   │   └── jest-e2e.json
-│   │   ├── tsconfig.build.json
-│   │   └── tsconfig.json
-│   └── office-dynamic-quizz
-│       ├── README.md
-│       ├── jsconfig.json
-│       ├── next.config.js
-│       ├── package.json
-│       ├── postcss.config.js
-│       ├── src
-│       │   └── app
-│       │       ├── favicon.ico
-│       │       ├── globals.css
-│       │       ├── layout.js
-│       │       ├── page.js
-│       │       ├── signin
-│       │       │   └── page.js
-│       │       └── signup
-│       │           └── page.js
-│       └── tailwind.config.js
-```
-
 ---
 
 ## Installation et Configuration 🚩
@@ -165,7 +89,7 @@ Pour mettre en place et exécuter ce projet, suivez ces étapes :
 > Assurez-vous que le port 3306 est libre pour que le container puisse être lancé. Il faudra donc stopper le **XAMPP, WAMP, LAMP ou MAMP**
 
 ```bash
-docker-compose up -d
+docker-compose up --build
 ```
 
       > Pour consulter les logs du container
