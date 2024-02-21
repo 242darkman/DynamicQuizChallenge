@@ -23,12 +23,11 @@ export class JoinedRoomService {
 
   async findAll(): Promise<JoinedRoomEntity[]> {
     return this.joinedRoomRepository
-    .createQueryBuilder('joinedRoom')
-    .leftJoinAndSelect('joinedRoom.user', 'user')
-    .select(['user.username'])
-    .getRawMany();
+      .createQueryBuilder('joinedRoom')
+      .leftJoinAndSelect('joinedRoom.user', 'user')
+      .select(['user.username'])
+      .getRawMany();
   }
-  
 
   async findByRoom(room: RoomInterface): Promise<JoinedRoomInterface[]> {
     return this.joinedRoomRepository.find({ where: { room } });

@@ -20,10 +20,8 @@ import { RoomService } from 'src/quiz/service/room/room.service';
 import { UserInterface } from 'src/user/model/user.interface';
 import { UserService } from 'src/user/service/user-service/user.service';
 import get from 'lodash/get';
-import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
-import {OpenAIService} from 'src/quiz/service/openai/openai.service'; 
+import { OpenAIService } from 'src/quiz/service/openai/openai.service';
 import { QuizService } from '../service/quiz/quiz.service';
-import { UserEntity } from 'src/user/model/user.entity';
 
 @WebSocketGateway({
   cors: {
@@ -46,7 +44,6 @@ export class QuizGateway
     private userService: UserService,
     private roomService: RoomService,
     private quizService: QuizService,
-    private roomSettingService: RoomSettingService,
     private connectedUserService: ConnectedUserService,
     private joinedRoomService: JoinedRoomService,
     private openAIService: OpenAIService,
@@ -246,6 +243,7 @@ export class QuizGateway
         numberOfQuestions,
       );
       client.emit('response', response);
+      client.broadcast.emit('response', response);
       this.logger.debug(`la réponse du serveur :`, response);
     } catch (error) {
       this.logger.error(
@@ -270,6 +268,19 @@ export class QuizGateway
     }
   }
 
+  @SubscribeMessage('socketError')
+  async socketError(client: Socket) {
+    try {
+      await this.joinedRoomService.deleteAll();
+      await this.quizService.deleteAll();
+      this.logger.debug(client.id);
+    } catch (error) {
+      this.logger.error(
+        `Erreur lors de la suppression dans la join et ranking : ${error.message}`,
+      );
+    }
+  }
+
   /**
    * Handle the event when a user joins a room.
    *
@@ -290,7 +301,6 @@ export class QuizGateway
         password,
       );
 
-      // save room connexion
       await this.joinedRoomService.create({
         socketId: client.id,
         user,
@@ -315,89 +325,65 @@ export class QuizGateway
     }
   }
 
-
-  /**
-   * Méthode pour générer les questions
-   * @param client 
-   * @param gameConfig 
-   */
-  @SubscribeMessage('generateQuestionWithParams')
-    async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
-    const { theme, numberOfQuestions, level } = gameConfig;
-
-    try{
-      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      client.broadcast.emit('response', response);
-      client.emit('response', response);
-      
-    }catch (error) {
-      this.logger.error(
-        `Erreur lors de la tentative récupération des questions : ${error.message}`,
-      );
-    }
-  }
-
-
   /**
    * Récupérer la liste des joueurs sur la page d'attente
-   * @param client 
+   * @param client
    */
   @SubscribeMessage('getAllParticipantsInJoinedRooms')
   async getAllParticipantsInJoinedRooms(client: Socket) {
     try {
       const participants = await this.joinedRoomService.findAll();
-      
+
       client.emit('allParticipants', participants);
       client.broadcast.emit('updateJoinedRooms', participants);
-
     } catch (error) {
-      this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
+      this.logger.error(
+        `Erreur lors de la récupération des salles jointes : ${error.message}`,
+      );
     }
   }
 
-    /**
+  /**
    * Récupérer la liste des joueurs sur la page d'attente
-   * @param client 
+   * @param client
    */
-    @SubscribeMessage('getRanking')
-    async getRanking(client: Socket) {
-      try {
-        const ranking = await this.quizService.findAll();
-        
-        client.emit('finalRanking', ranking);
-        client.broadcast.emit('updateFinalRanking', ranking);
-  
-      } catch (error) {
-        this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
-      }
-    }
+  @SubscribeMessage('getRanking')
+  async getRanking(client: Socket) {
+    try {
+      const ranking = await this.quizService.findAll();
 
+      client.emit('finalRanking', ranking);
+      client.broadcast.emit('updateFinalRanking', ranking);
+    } catch (error) {
+      this.logger.error(
+        `Erreur lors de la récupération des salles jointes : ${error.message}`,
+      );
+    }
+  }
 
   /**
    * Méthode pour enregistre le score
-   * @param client 
-   * @param totalScore 
+   * @param client
+   * @param totalScore
    */
   @SubscribeMessage('createRanking')
   async ranking(client: Socket, score: number) {
     try {
       const user: UserInterface = client.data.user;
       await this.quizService.createRanking(user, score);
-      
     } catch (error) {
       this.logger.error(`Erreur lors du calcul de score : ${error.message}`);
     }
   }
-  
+
   /**
-   * Rédiriger tous les participants 
+   * Rédiriger tous les participants
    */
   @SubscribeMessage('startGame')
   startGame(client: Socket) {
     client.emit('redirectToGamePage');
     client.broadcast.emit('redirectToGamePage');
   }
-
 
   /**
    * A description of the entire function.
@@ -408,7 +394,6 @@ export class QuizGateway
   @SubscribeMessage('leaveRoom')
   async onLeaveRoom(client: Socket) {
     try {
-      // supprime la connexion du salon rejoint
       await this.joinedRoomService.deleteBySocketId(client.id);
       this.server.to(client.id).emit('leaveRoomResponse', {
         success: true,
@@ -439,7 +424,7 @@ export class QuizGateway
       JSON.stringify(connections),
       'EX',
       3600,
-    ); // Expire après 1 heure
+    );
   }
 
   /**
@@ -456,7 +441,7 @@ export class QuizGateway
     const rooms = cachedRooms
       ? JSON.parse(cachedRooms)
       : await this.roomService.getRoomsForUser(userId, { page: 1, limit: 10 });
-    await this.redisClient.set(cacheKey, JSON.stringify(rooms), 'EX', 3600); // Expire après 1 heure
+    await this.redisClient.set(cacheKey, JSON.stringify(rooms), 'EX', 3600);
     rooms.meta.currentPage = rooms.meta.currentPage - 1;
     await this.connectedUserService.create({ socketId: socket.id, user });
     this.server.to(socket.id).emit('rooms', rooms);
@@ -482,7 +467,6 @@ export class QuizGateway
   private async invalidateCacheForUserDisconnect(userId: string) {
     const cacheKey = `connectedUsers:${userId}`;
     await this.redisClient.del(cacheKey);
-    // Also disable this user's room cache
     await this.invalidateCachedRoomsForUser(userId);
   }
 }

@@ -11,7 +11,6 @@ import {
 } from 'typeorm';
 
 import { JoinedRoomEntity } from 'src/quiz/model/joined-room/joined-room.entity';
-import { QuizEntity } from 'src/quiz/model/quiz/quiz.entity';
 import { RoomSettingEntity } from 'src/quiz/model/room/setting/room-setting.entity';
 import { UserEntity } from 'src/user/model/user.entity';
 
@@ -32,9 +31,6 @@ export class RoomEntity {
 
   @OneToMany(() => JoinedRoomEntity, (joinedRoom) => joinedRoom.room)
   joinedUsers: JoinedRoomEntity[];
-
-  @OneToMany(() => QuizEntity, (quiz) => quiz.room)
-  quiz: QuizEntity[];
 
   @Column({ default: true })
   isPrivate: boolean;
