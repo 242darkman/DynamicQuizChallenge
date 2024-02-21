@@ -27,11 +27,19 @@ export class QuizService {
 
   async createRanking(user: UserInterface, score: number): Promise<RankingEntity> {
     try {
-      console.log('score service ', score);
         return await this.rankingRepository.save({user, score});
     } catch (error) {
         throw new Error(`Erreur lors de la création du classement : ${error.message}`);
     }
+}
+
+async findAll(): Promise<RankingEntity[]> {
+  return this.rankingRepository
+  .createQueryBuilder('ranking')
+  .leftJoinAndSelect('ranking.user', 'user')
+  .select(['user.username', 'score'])
+  .orderBy('score', 'DESC')
+  .getRawMany();
 }
 
   async getUserScores(): Promise<any[]> {
@@ -66,5 +74,10 @@ export class QuizService {
 
     const scores = await query.getRawMany();
     return scores;
+  }
+
+
+  async deleteAll() {
+    await this.rankingRepository.createQueryBuilder().delete().execute();
   }
 }

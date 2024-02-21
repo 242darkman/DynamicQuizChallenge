@@ -24,7 +24,7 @@ function shuffleArray(array) {
 function Question() {
   const router = useRouter();
   const { user} = useAuth();
-  const { clearRoomData, serverResponse, room, storeServerResponse, storeScore } = useRoom() || {};
+  const { clearRoomData, serverResponse, room, storeServerResponse } = useRoom() || {};
 
   const socket = useSocket();
   const [timer, setTimer] = useState(20);
@@ -109,12 +109,11 @@ function Question() {
   const nextRound = () => {
     if (round === totalRounds) {
       toast.success("Bravo, la partie est terminer vérifions votre score");
-      storeScore(totalScore);
       setRound(1);
       setRoundsCompleted(0);
       resetGameState();
 
-      socket.emit('ranking', totalScore);
+      socket.emit('createRanking', totalScore);
       router.push('/room/ranking');
       return;
     }

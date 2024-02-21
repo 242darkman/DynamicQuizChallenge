@@ -66,6 +66,7 @@ export class QuizGateway
     await this.redisClient.del('joinedRooms');
     await this.connectedUserService.deleteAll();
     await this.joinedRoomService.deleteAll();
+    await this.quizService.deleteAll();
   }
 
   /**
@@ -284,35 +285,7 @@ export class QuizGateway
     const { theme, numberOfQuestions, level } = gameConfig;
 
     try{
-      //const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
-      const table = 
-      [
-        {
-            theme: "Histoire",
-            question: "Quelle était la capitale des États-Unis avant Washington, D.C. ?",
-            correct_answer: "Philadelphie",
-            incorrect_answers: ["Boston", "New York", "Chicago"]
-        },
-        {
-            theme: "Science",
-            question: "Quelle est la planète la plus proche du soleil?",
-            correct_answer: "Mercure",
-            incorrect_answers: ["Vénus", "Terre", "Mars"]
-        },
-        {
-            theme: "Culture Générale",
-            question: "Qui a peint 'La Joconde'?",
-            correct_answer: "Leonardo da Vinci",
-            incorrect_answers: ["Michel-Ange", "Raphael", "Caravaggio"]
-        },
-        {
-            theme: "Sports",
-            question: "Dans quel sport les joueurs ont-ils été disqualifiés pour avoir 'influencé les conditions météorologiques'?",
-            correct_answer: "cricket",
-            incorrect_answers: ["Golf", "Football", "Tennis"]
-        },
-      ];
-      const response = table;
+      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
       client.broadcast.emit('response', response);
       client.emit('response', response);
       
@@ -334,7 +307,6 @@ export class QuizGateway
       const participants = await this.joinedRoomService.findAll();
       
       client.emit('allParticipants', participants);
-      this.logger.debug(`La réponse du serveur :` , participants);
       client.broadcast.emit('updateJoinedRooms', participants);
 
     } catch (error) {
@@ -342,20 +314,34 @@ export class QuizGateway
     }
   }
 
+    /**
+   * Récupérer la liste des joueurs sur la page d'attente
+   * @param client 
+   */
+    @SubscribeMessage('getRanking')
+    async getRanking(client: Socket) {
+      try {
+        const ranking = await this.quizService.findAll();
+        
+        client.emit('finalRanking', ranking);
+        client.broadcast.emit('updateFinalRanking', ranking);
+  
+      } catch (error) {
+        this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
+      }
+    }
+
 
   /**
-   * Méthode pour le score
+   * Méthode pour enregistre le score
    * @param client 
    * @param totalScore 
    */
-  @SubscribeMessage('ranking')
+  @SubscribeMessage('createRanking')
   async ranking(client: Socket, score: number) {
     try {
       const user: UserInterface = client.data.user;
-      await this.quizService.createRanking(
-        user, 
-        score
-      );
+      await this.quizService.createRanking(user, score);
       
     } catch (error) {
       this.logger.error(`Erreur lors du calcul de score : ${error.message}`);
