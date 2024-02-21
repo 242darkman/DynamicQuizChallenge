@@ -30,7 +30,7 @@ function WaitingHome() {
       router.push('/room/question');
     });
 
-  },[socket]);
+  },[socket, router]);
   
   //Gérer le clique pour débuter le quizz
   const startGame = () => {

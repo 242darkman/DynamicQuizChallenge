@@ -30,7 +30,7 @@ const HeaderUI = ({ username, timer, theme, difficulty, isPrivate, roomName }) =
         socket.off('leaveRoomResponse');
       }
     }
-  }, []);
+  }, [socket, router]);
 
   return (
     <div className="flex justify-around items-center content-center p-4 bg-blue-900 text-white">

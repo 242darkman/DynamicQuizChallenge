@@ -42,7 +42,7 @@ function RoomSettings() {
         socket.off('error', handleError);
       };
     }
-  }, [socket, router, clearRoomData]);
+  }, [socket, router, clearRoomData, roomData]);
 
   const createRoom = (room) => {
     if (socket) {
