@@ -1,21 +1,16 @@
-# Utilise l'image officielle de Node.js 18 comme base
-FROM node:18
+FROM node:18 AS development
 
-# Définit le répertoire de travail dans le conteneur
-WORKDIR /app
+WORKDIR /usr/src/app
 
-# Copie le package.json et package-lock.json
-COPY packages/office-dynamic-quizz/package*.json ./
+# Copiez les fichiers package.json et package-lock.json depuis le contexte de construction vers l'image Docker
+COPY package*.json ./
 
-# Installe les dépendances du projet
+# Installez les dépendances de l'application
 RUN npm install
 
-# Copie le reste des fichiers du projet
-COPY packages/office-dynamic-quizz/ .
+# Copiez le reste des fichiers de l'application depuis le contexte de construction vers l'image Docker
+COPY . .
 
-# Construit l'application pour la production
-# hadolint ignore=DL3003
-RUN npm run build
+EXPOSE  3000
 
-# Lance l'application
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "dev"]

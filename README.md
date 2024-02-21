@@ -158,7 +158,7 @@ Pour mettre en place et exécuter ce projet, suivez ces étapes :
 - **Backend (NestJS) :** Dans le dossier `core-dynamic-quizz`, exécutez `npm run start:dev` pour démarrer le serveur backend.
 - **Frontend (NextJS) :** Dans le dossier `office-dynamic-quizz`, exécutez `npm run dev` pour lancer le serveur de développement frontend.
 
-### Démarrer la base de données
+### Démarrer le projet
 
 > ### Via docker
 >
@@ -171,7 +171,7 @@ docker-compose up -d
       > Pour consulter les logs du container
 
 ```bash
-docker-compose logs -f mysql
+docker-compose logs
 ```
 
 > ### Si vous utiliser **XAMPP, WAMP, LAMP ou MAMP**
@@ -209,4 +209,33 @@ Pour une vérification pratique, vous pouvez essayer d'accéder à vos applicati
 
 ## Crédit image
 
+![Mon fond d'écran](/packages/office-dynamic-quizz/public/landscape.svg)
 Image by <a href="https://www.freepik.com/free-vector/gradient-mountain-landscape_20008474.htm#query=landscape&position=12&from_view=search&track=sph&uuid=9b9ee8a6-ab6d-4a57-a261-097e7af08fa2">Freepik</a>
+
+
+## Equipe de dev
+ * **_Laura FAUVET_**
+ * **_Erica Grace NFONO NDONG_**
+ * **_Lansana KEITA_**
+ * **_Brandon VOUVOU_** 
+
+  ## Répartition des tâches 🧑‍💼 :
+  ### Développement frontend (Par Laura & Erica)
+  * Création des différents composants et pages de l'application
+    * Page d'accueil
+    * Page de création d'un salon ou pour y rejoindre
+    * Page d'attente avant de lancer une partie
+    * Page de jeu
+    * Page de fin de partie
+    * Page d'affichage du classement
+    * Page de connexion
+    * Page de cration d'un compte
+  * Mise en place de l'authentification
+  * Gestion de routes
+
+  ### Développement backend (Par Lansana & Brandon)
+  * Création des modèles de données
+  * Création des services pour effectuer des actions avec la base de données
+  * Mise en place du service OpenAI
+  * Mise en place de la gateway et des différents events avec Socket.io
+  * Gestion du cache avec Redis
