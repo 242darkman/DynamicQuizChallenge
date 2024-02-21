@@ -17,6 +17,10 @@ export default function Signup() {
     const response = await fetch(
       `http://127.0.0.1:5000/api/users/check-username?username=${username}`, {
         method: "GET",
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': 'http://127.0.0.1:5000',
+        },
       }
     );
     const data = await response.json();

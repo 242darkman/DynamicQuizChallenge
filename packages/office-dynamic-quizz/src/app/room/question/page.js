@@ -12,6 +12,9 @@ import { useAuth } from "@/app/_context/AuthContext";
 import { useRoom } from '@/app/_context/RoomContext';
 import { useRouter } from "next/navigation";
 import { useSocket } from '@/app/_context/SocketContext';
+import { Progress } from 'antd';
+import { toast } from "sonner";
+import { useAuth } from "@/app/_context/AuthContext";
 import withAuth from "@/app/middleware";
 
 //Fonction pour mélanger les questions
@@ -26,6 +29,8 @@ const shuffleArray = (array) => {
 
 function Question() {
   const router = useRouter();
+  const { user} = useAuth();
+  const { clearRoomData, serverResponse, room, storeServerResponse } = useRoom() || {};
   const { serverResponse, room , storeServerResponse, storeScore} = useRoom();
   const socket = useSocket();
   const { user, logout } = useAuth();
@@ -106,7 +111,28 @@ function Question() {
     }
   }, [currentQuestionIndex, questions, userAnswers]);
   
+  // Fonction pour joueur le tour suivant 
+  const nextRound = () => {
+    if (round === totalRounds) {
+      toast.success("Bravo, la partie est terminer vérifions votre score");
+      setRound(1);
+      setRoundsCompleted(0);
+      resetGameState();
 
+      socket.emit('createRanking', totalScore);
+      router.push('/room/ranking');
+      return;
+    }
+  
+    setRound(round + 1);
+    setRoundsCompleted(roundsCompleted + 1);
+  
+    if (roundsCompleted < totalRounds - 1) {
+      newGame();
+    }
+  };
+
+    
   // Fonction pour enregistrer la réponse de l'utilisateur et passer à la question suivante
   const handleAnswer = (isCorrect) => {
     const answer = {

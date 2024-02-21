@@ -21,7 +21,9 @@ import { UserInterface } from 'src/user/model/user.interface';
 import { UserService } from 'src/user/service/user-service/user.service';
 import get from 'lodash/get';
 import { RoomSettingService } from 'src/quiz/service/room-setting/room-setting.service';
-import { OpenAIService } from 'src/quiz/service/openai/openai.service';
+import {OpenAIService} from 'src/quiz/service/openai/openai.service'; 
+import { QuizService } from '../service/quiz/quiz.service';
+import { UserEntity } from 'src/user/model/user.entity';
 
 @WebSocketGateway({
   cors: {
@@ -43,6 +45,7 @@ export class QuizGateway
     private authService: AuthService,
     private userService: UserService,
     private roomService: RoomService,
+    private quizService: QuizService,
     private roomSettingService: RoomSettingService,
     private connectedUserService: ConnectedUserService,
     private joinedRoomService: JoinedRoomService,
@@ -62,6 +65,7 @@ export class QuizGateway
     await this.redisClient.del('joinedRooms');
     await this.connectedUserService.deleteAll();
     await this.joinedRoomService.deleteAll();
+    await this.quizService.deleteAll();
   }
 
   /**
@@ -310,6 +314,90 @@ export class QuizGateway
       });
     }
   }
+
+
+  /**
+   * Méthode pour générer les questions
+   * @param client 
+   * @param gameConfig 
+   */
+  @SubscribeMessage('generateQuestionWithParams')
+    async generateQuestionWithParams(client: Socket, gameConfig: { theme: string; level: string, numberOfQuestions: number; }) {
+    const { theme, numberOfQuestions, level } = gameConfig;
+
+    try{
+      const response = await this.openAIService.generateQuestions(theme, level, numberOfQuestions);
+      client.broadcast.emit('response', response);
+      client.emit('response', response);
+      
+    }catch (error) {
+      this.logger.error(
+        `Erreur lors de la tentative récupération des questions : ${error.message}`,
+      );
+    }
+  }
+
+
+  /**
+   * Récupérer la liste des joueurs sur la page d'attente
+   * @param client 
+   */
+  @SubscribeMessage('getAllParticipantsInJoinedRooms')
+  async getAllParticipantsInJoinedRooms(client: Socket) {
+    try {
+      const participants = await this.joinedRoomService.findAll();
+      
+      client.emit('allParticipants', participants);
+      client.broadcast.emit('updateJoinedRooms', participants);
+
+    } catch (error) {
+      this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
+    }
+  }
+
+    /**
+   * Récupérer la liste des joueurs sur la page d'attente
+   * @param client 
+   */
+    @SubscribeMessage('getRanking')
+    async getRanking(client: Socket) {
+      try {
+        const ranking = await this.quizService.findAll();
+        
+        client.emit('finalRanking', ranking);
+        client.broadcast.emit('updateFinalRanking', ranking);
+  
+      } catch (error) {
+        this.logger.error(`Erreur lors de la récupération des salles jointes : ${error.message}`);
+      }
+    }
+
+
+  /**
+   * Méthode pour enregistre le score
+   * @param client 
+   * @param totalScore 
+   */
+  @SubscribeMessage('createRanking')
+  async ranking(client: Socket, score: number) {
+    try {
+      const user: UserInterface = client.data.user;
+      await this.quizService.createRanking(user, score);
+      
+    } catch (error) {
+      this.logger.error(`Erreur lors du calcul de score : ${error.message}`);
+    }
+  }
+  
+  /**
+   * Rédiriger tous les participants 
+   */
+  @SubscribeMessage('startGame')
+  startGame(client: Socket) {
+    client.emit('redirectToGamePage');
+    client.broadcast.emit('redirectToGamePage');
+  }
+
 
   /**
    * A description of the entire function.
