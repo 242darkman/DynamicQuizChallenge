@@ -33,30 +33,6 @@ services:
     volumes:
       - redis:/data
 
-  core-dynamic-quizz:
-    build: ./packages/core-dynamic-quizz
-    container_name: core_dynamic_quizz
-    environment:
-      DB_HOST: mysql
-      REDIS_HOST: redis-db
-    ports:
-      - "5000:5000"
-    depends_on:
-      - mysql
-      - redis
-    volumes:
-      - ./packages/core-dynamic-quizz:/app
-
-  office-dynamic-quizz:
-    build: ./packages/office-dynamic-quizz
-    container_name: office_dynamic_quizz
-    environment:
-      NEXT_PUBLIC_SERVER_URL: http://core-dynamic-quizz:5000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - core-dynamic-quizz
-
 volumes:
   mysql_data:
   redis:

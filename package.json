@@ -7,13 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "docker:compose": "docker-compose up --build -d",
-    "docker:stop": "docker-compose stop",
-    "docker:down": "docker-compose down",
-    "docker:database-logs": "docker-compose logs -f mysql",
-    "server:dev": "cd packages/core-dynamic-quizz && npm run start:dev",
-    "client:dev": "cd packages/office-dynamic-quizz && npm run dev",
-    "start:all": "concurrently \"npm run server:dev\" \"npm run client:dev\""
+    "docker:compose": "docker-compose up --build",
+    "server:dev": "cd packages/core-dynamic-quizz && npm install && npm run start:dev",
+    "client:dev": "cd packages/office-dynamic-quizz && npm install && npm run dev",
+    "start:all": "concurrently \"npm run docker:compose\" \"npm run server:dev\" \"npm run client:dev\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

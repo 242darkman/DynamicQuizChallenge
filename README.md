@@ -84,12 +84,19 @@ Pour mettre en place et exécuter ce projet, suivez ces étapes :
 
 ### Démarrer le projet
 
-> ### Via docker
->
 > Assurez-vous que le port 3306 est libre pour que le container puisse être lancé. Il faudra donc stopper le **XAMPP, WAMP, LAMP ou MAMP**
+>
+> Ensuite se mettre à la racine du dossier `DynamicQuizChallenge` et lancer les commandes suivantes :
+> Pensez à ajouter dans le fichier `.env` du dossier `core-dynamic-quizz` le variable d'environnement `OPENAI_API_KEY` correspondant à votre clé API OpenAI.
 
 ```bash
-docker-compose up --build
+npm install && npm run start:all # pour les systèmes Linux MacOS
+```
+
+```bash
+# pour les systèmes windows
+npm install
+npm run start:all
 ```
 
       > Pour consulter les logs du container
